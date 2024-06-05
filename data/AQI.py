@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 
 # Leer los datos del CSV
-data = pd.read_csv('beijing_17_18_aq.csv')
+data = pd.read_csv('data/beijing_17_18_aq.csv')
 
 # Filtrar por estación aotizhongxin_aq
 station_data = data[data['stationId'] == 'aotizhongxin_aq']
@@ -27,11 +27,11 @@ def calculate_iaqi(pollutant, concentration):
     return np.nan
 
 # Aplicar la fórmula del IAQI
-for pollutant in ['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']:
+for pollutant in ['PM2.5', 'PM10', 'NO2', 'CO', 'O3', 'SO2']:
     station_data[f'IAQI_{pollutant}'] = station_data[pollutant].apply(lambda x: calculate_iaqi(pollutant, x))
 
 # Calcular el AQI como el máximo IAQI de los contaminantes
-station_data['AQI'] = station_data[[f'IAQI_{pollutant}' for pollutant in ['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']]].max(axis=1)
+station_data['AQI'] = station_data[[f'IAQI_{pollutant}' for pollutant in ['PM2.5', 'PM10', 'NO2', 'CO', 'O3', 'SO2']]].max(axis=1)
 
 # Convertir a escala diaria y calcular el AQI promedio diario
 station_data['utc_time'] = pd.to_datetime(station_data['utc_time'])
@@ -42,4 +42,4 @@ daily_aqi = station_data['AQI'].resample('D').mean().reset_index()
 daily_aqi['AQI_Level'] = pd.cut(daily_aqi['AQI'], bins=[0, 50, 100, 150, 200, 300, 500], labels=[1, 2, 3, 4, 5, 6])
 
 # Construir el archivo CSV de salida
-daily_aqi.to_csv('aqi.csv', index=False)
+daily_aqi.to_csv('aqi2.csv', index=False)

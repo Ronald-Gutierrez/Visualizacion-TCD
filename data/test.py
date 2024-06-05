@@ -69,7 +69,7 @@ def classify_AQI(aqi):
         return 6  # Peligroso
 
 # Aplicar la función de cálculo de IAQI para cada contaminante
-pollutants = ['PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3']
+pollutants = ['PM2.5', 'PM10', 'NO2', 'CO', 'O3' , 'SO2']
 for pollutant in pollutants:
     data[f'{pollutant}_IAQI'] = data.apply(lambda x: calculate_IAQI(x[pollutant], pollutant), axis=1)
 
@@ -81,4 +81,4 @@ for pollutant in pollutants:
     data[f'{pollutant}'] = data[f'{pollutant}_IAQI'].apply(classify_AQI)
 
 # Guardar los resultados en un nuevo archivo CSV
-data.to_csv('aqi_output.csv', columns=['stationId', 'utc_time', 'PM2.5', 'PM10', 'SO2', 'NO2', 'CO', 'O3'], index=False)
+data.to_csv('aqi_output.csv', columns=['stationId', 'utc_time', 'PM2.5', 'PM10', 'NO2', 'CO', 'O3' , 'SO2'], index=False)
