@@ -214,3 +214,6 @@ function formatDate(date) {
     var formatTime = d3.timeFormat("%Y-%m-%d %H:%M:%S");
     return formatTime(date);
 }
+
+
+
