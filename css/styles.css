@@ -6,9 +6,15 @@
   border-radius: 5px;
   pointer-events: none;
 }
+.charts-container{
 
+  margin-top: -90px;
+
+}
 .chart {
-  margin-bottom: 20px;
+  margin-bottom: -50px;
+  margin-top: 20px;
+  margin-left: 0px;
 }
 .grid-container {
   display: grid;
