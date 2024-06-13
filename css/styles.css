@@ -27,6 +27,7 @@
 #image-container {
   grid-column: 2;
   text-align: right;
+  
 }
 #image-container img {
   width: 80%; /* Ajusta el ancho de la imagen */
@@ -52,3 +53,6 @@
   font-family: Arial, Helvetica, sans-serif;
   text-anchor: middle;
 }
+
+
+

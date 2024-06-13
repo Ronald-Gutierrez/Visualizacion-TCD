@@ -20,6 +20,14 @@ var legendData = [
 
 var variables = ["PM2_5", "PM10", "SO2", "NO2", "CO", "O3"];
 
+function formatStationId(stationId) {
+    var formattedId = stationId.charAt(0).toUpperCase() + stationId.slice(1);
+    formattedId = formattedId.replace("_aq", "");
+    formattedId = formattedId.replace("_meo", "");
+
+    return formattedId;
+}
+
 function drawChart(variable, containerId) {
     var svg = d3.select("#" + containerId).append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -34,10 +42,10 @@ function drawChart(variable, containerId) {
         .style("font-size", "16px")
         // .style("text-decoration", "underline")
         .text(variable);
-
+    
     d3.csv("data/daily_aqi_output.csv").then(function(data) {
         data = data.filter(function(d) {
-            return d.stationId === "aotizhongxin_aq";
+            return d.stationId === "dingling_aq";
         });
 
         var parseTime = d3.timeParse("%Y-%m-%d");
@@ -98,6 +106,115 @@ function drawChart(variable, containerId) {
             .on("mouseout", function(d) {
                 d3.select("#tooltip").style("opacity", 0);
             });
+    // Cargar los datos de latitud y longitud de las estaciones de AQ
+    d3.csv("data/lat_lon_beijijng_aq.csv").then(function(data) {
+        // Verificar que los datos se están cargando correctamente
+        console.log("Datos cargados:", data);
+
+        // Agregar las imágenes al mapa
+        // Continuamos desde la sección donde creamos el mapa y las imágenes
+        // Agregar las imágenes al mapa
+        g.selectAll(".station-image")
+        .data(data) // Aquí deberías usar los datos correctos, según la fuente de datos
+        .enter()
+        .append("image")
+        .attr("class", "station-image")
+        .attr("x", function(d) {
+            return projection([+d.longitude, +d.latitude])[0] - 10; // Ajusta la posición en x para centrar la imagen
+        })
+        .attr("y", function(d) {
+            return projection([+d.longitude, +d.latitude])[1] - 10; // Ajusta la posición en y para centrar la imagen
+        })
+        .attr("width", 30) // Ancho de la imagen
+        .attr("height", 30) // Altura de la imagen
+        .attr("xlink:href", "img/mark_aq.png") // Ruta a la imagen que deseas cargar
+        .on("mouseover", function(d) {
+            var stationId = d.stationId; // Obtener el station_id desde los datos
+            var formattedId = formatStationId(stationId);
+            
+            // Mostrar el tooltip
+            d3.select(this)
+            .transition()
+            .attr("width", 40) // Cambiar el ancho al pasar el mouse
+            .attr("height", 40); // Cambiar la altura al pasar el mouse
+
+            d3.select("#tooltip")
+                .style("left", (d3.event.pageX + 10) + "px")
+                .style("top", (d3.event.pageY - 20) + "px")
+                .style("opacity", 0.9)
+                .html("Estación de AQ: " + formattedId);
+        })
+        .on("mouseout", function() {
+            // Ocultar el tooltip al quitar el mouse
+            d3.select("#tooltip").style("opacity", 0);
+            d3.select(this)
+                .transition()
+                .attr("width", 30) // Restaurar el ancho al quitar el mouse
+                .attr("height", 30);
+        })       
+         
+        .on("click", function(d) {
+            // Lógica adicional al hacer clic en la imagen de la estación
+            var stationId = d.stationId; 
+            console.log("Haz clic en la imagen de la estación AQI:", stationId);
+        });
+        
+
+    }).catch(function(error) {
+        console.log("Error al cargar los datos CSV:", error); // Manejar errores de carga de datos
+    });
+
+    // Cargar los datos de latitud y longitud de las estaciones de ME0
+    d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
+        // Agregar las imágenes al mapa
+        g.selectAll(".data-image")
+            .data(data)
+            .enter()
+            .append("image")
+            .attr("class", "data-image")
+            .attr("x", function(d) {
+                // Proyectar la longitud en el sistema de coordenadas del mapa
+                return projection([+d.longitude, +d.latitude])[0] - 15; // Ajusta la posición en x para centrar la imagen
+            })
+            .attr("y", function(d) {
+                // Proyectar la latitud en el sistema de coordenadas del mapa
+                return projection([+d.longitude, +d.latitude])[1] - 15; // Ajusta la posición en y para centrar la imagen
+            })
+            .attr("station-label", function(d) {
+                return d.stationId; // Ajusta esto según tu estructura de datos
+            })
+            .attr("width", 30) // Ancho de la imagen
+            .attr("height", 30) // Altura de la imagen
+            .attr("xlink:href", "img/mark_meo.png") // Ruta a la imagen que deseas cargar
+            .on("mouseover", function(d) {
+                var stationId = d.stationId; // Obtener el station_id desde los datos
+                var formattedId = formatStationId(stationId);
+                d3.select(this)
+                .transition()
+                .attr("width", 40) // Cambiar el ancho al pasar el mouse
+                .attr("height", 40); // Cambiar la altura al pasar el mouse
+    
+                // Mostrar el tooltip
+                d3.select("#tooltip")
+                    .style("left", (d3.event.pageX + 10) + "px")
+                    .style("top", (d3.event.pageY - 20) + "px")
+                    .style("opacity", 0.9)
+                    .html("Estación de Meo: " + formattedId);
+            })
+            .on("mouseout", function() {
+                // Ocultar el tooltip al quitar el mouse
+                d3.select("#tooltip").style("opacity", 0);
+                d3.select(this)
+                .transition()
+                .attr("width", 30) // Restaurar el ancho al quitar el mouse
+                .attr("height", 30);
+            })   
+            .on("click", function(d) {
+                // Lógica adicional al hacer clic en la imagen de la estación
+                var stationId = d.stationId; 
+                console.log("Haz clic en la imagen de la estación ME0:", stationId);
+            });
+    });
     });
 }
 

@@ -1,0 +1,36 @@
+Dióxido de azufre (SO2):
+
+BPHi: 500
+BPLo: 150
+IAQIHi: 100
+IAQILo: 50
+Dióxido de nitrógeno (NO2):
+
+BPHi: 400
+BPLo: 100
+IAQIHi: 100
+IAQILo: 50
+Material particulado (PM10):
+
+BPHi: 600
+BPLo: 150
+IAQIHi: 100
+IAQILo: 50
+Monóxido de carbono (CO):
+
+BPHi: 35
+BPLo: 9
+IAQIHi: 100
+IAQILo: 50
+Ozono (O3):
+
+BPHi: 300
+BPLo: 100
+IAQIHi: 200
+IAQILo: 100
+Material particulado fino (PM2.5):
+
+BPHi: 500
+BPLo: 75
+IAQIHi: 150
+IAQILo: 100
