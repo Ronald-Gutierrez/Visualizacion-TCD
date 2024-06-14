@@ -27,8 +27,218 @@ function formatStationId(stationId) {
 
     return formattedId;
 }
+updateChartsForStation("dingling_aq");
 
-function drawChart(variable, containerId) {
+function drawChart(variable, containerId, stationId) {
+    var svg = d3.select("#" + containerId).append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    svg.append("text")
+        .attr("x", -70)
+        .attr("y", 30)
+        .attr("text-anchor", "start")
+        .style("font-size", "16px")
+        .text(variable);
+    
+    d3.csv("data/daily_aqi_output.csv").then(function(data) {
+        data = data.filter(function(d) {
+            return d.stationId === "yufa_aq";
+        });
+
+        var parseTime = d3.timeParse("%Y-%m-%d");
+        data.forEach(function(d) {
+            d.date = parseTime(d.date);
+            d[variable] = +d[variable];
+        });
+
+        x.domain(d3.extent(data, function(d) { return d.date; })).nice();
+        y.domain([0, d3.max(data, function(d) { return d[variable]; })]);
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d")));
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(d3.axisLeft(y).ticks(7));
+
+        svg.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("class", "dot")
+            .attr("r", 5)
+            .attr("cx", function(d) { return x(d.date); })
+            .attr("cy", function(d) { return y(d[variable]); })
+            .style("fill", function(d) { return color(d[variable]); })
+            .on("click", function(d) {
+                var clickedCircle = d3.select(this);
+                var isEnlarged = clickedCircle.attr("r") == 15;
+                d3.select("#popup-chart-container").selectAll("*").remove();
+
+                // Mostrar el contenedor del gráfico emergente
+                d3.select("#popup-chart-container").style("display", "block");
+
+                // Crear el gráfico emergente
+                drawHourlyChart(variable, "popup-chart-container", stationId, d.date);
+                // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
+                d3.selectAll(".dot")
+                    .attr("r", 5)
+                    .style("stroke", null);
+            
+                // Si el punto no estaba ampliado, ampliarlo y resaltar otros puntos
+                if (!isEnlarged) {
+                    showTimeSeries(d.date);
+                    updateOtherCharts(d.date);
+                    clickedCircle
+                        .transition()
+                        .duration(200)
+                        .attr("r", 15);
+                }
+            })
+            
+            .on("mouseover", function(d) {
+                var tooltip = d3.select("#tooltip")
+                    .style("left", (d3.event.pageX + 10) + "px")
+                    .style("top", (d3.event.pageY - 20) + "px")
+                    .style("opacity", 0.9);
+                tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
+                    "Valor de " + variable + ": " + d[variable]);
+            })
+            .on("mouseout", function(d) {
+                d3.select("#tooltip").style("opacity", 0);
+            });
+
+    
+    });
+}
+
+function drawHourlyChart(variable, containerId, stationId, selectedDate) {
+    var svg = d3.select("#" + containerId).append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    svg.append("text")
+        .attr("x", -70)
+        .attr("y", 30)
+        .attr("text-anchor", "start")
+        .style("font-size", "16px")
+        .text(variable + " - Por hora");
+
+    // Cargar datos de hour_aqi_output.csv para la estación y variable seleccionadas
+    d3.csv("data/hour_aqi_output.csv").then(function(data) {
+        data = data.filter(function(d) {
+            return d.stationId === stationId && formatDate(d.utc_time) === formatDate(selectedDate);
+        });
+
+        var parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+        data.forEach(function(d) {
+            d.utc_time = parseTime(d.utc_time);
+            d[variable] = +d[variable];
+        });
+
+        x.domain(d3.extent(data, function(d) { return d.utc_time; })).nice();
+        y.domain([0, d3.max(data, function(d) { return d[variable]; })]);
+
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(x).ticks(d3.timeHour.every(1)).tickFormat(d3.timeFormat("%H-%M")));
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(d3.axisLeft(y).ticks(7));
+
+        svg.append("path")
+            .datum(data)
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("stroke-width", 1.5)
+            .attr("d", d3.line()
+                .x(function(d) { return x(d.utc_time) })
+                .y(function(d) { return y(d[variable]) })
+            );
+
+        svg.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("class", "dot")
+            .attr("r", 3)
+            .attr("cx", function(d) { return x(d.utc_time); })
+            .attr("cy", function(d) { return y(d[variable]); })
+            .style("fill", "red")
+            .on("mouseover", function(d) {
+                var tooltip = d3.select("#tooltip")
+                    .style("left", (d3.event.pageX + 10) + "px")
+                    .style("top", (d3.event.pageY - 20) + "px")
+                    .style("opacity", 0.9);
+                tooltip.html("Fecha: " + formatDate(d.utc_time) + "<br/>" +
+                             "Valor de " + variable + ": " + d[variable]);
+            })
+            .on("mouseout", function(d) {
+                d3.select("#tooltip").style("opacity", 0);
+            });
+    });
+}
+function updateChartsForStation(stationId) {
+    variables.forEach(function(variable) {
+        var svg = d3.select("#chart-" + variable).select("svg").select("g");
+
+        // Obtener datos actualizados para la estación seleccionada
+        d3.csv("data/daily_aqi_output.csv").then(function(data) {
+            data = data.filter(function(d) {
+                return d.stationId === stationId;
+            });
+
+            var parseTime = d3.timeParse("%Y-%m-%d");
+            data.forEach(function(d) {
+                d.date = parseTime(d.date);
+                d[variable] = +d[variable];
+            });
+
+            // Actualizar dominios y ejes
+            x.domain(d3.extent(data, function(d) { return d.date; })).nice();
+            y.domain([0, d3.max(data, function(d) { return d[variable]; })]);
+
+            svg.select(".x.axis")
+                .transition()
+                .duration(500)
+                .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d")));
+
+            svg.select(".y.axis")
+                .transition()
+                .duration(500)
+                .call(d3.axisLeft(y).ticks(7));
+
+            // Actualizar puntos
+            var dots = svg.selectAll(".dot")
+                .data(data);
+
+            dots.exit().remove(); // Eliminar puntos que ya no se necesitan
+
+            dots.enter()
+                .append("circle")
+                .attr("class", "dot")
+                .merge(dots) // Fusionar puntos nuevos y existentes
+                .transition()
+                .duration(500)
+                .attr("r", 5)
+                .attr("cx", function(d) { return x(d.date); })
+                .attr("cy", function(d) { return y(d[variable]); })
+                .style("fill", function(d) { return color(d[variable]); });
+        });
+    });
+}
+
+
+function UpdateChart(variable, containerId, stationId) {
     var svg = d3.select("#" + containerId).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
@@ -45,7 +255,7 @@ function drawChart(variable, containerId) {
     
     d3.csv("data/daily_aqi_output.csv").then(function(data) {
         data = data.filter(function(d) {
-            return d.stationId === "dingling_aq";
+            return d.stationId === stationId;
         });
 
         var parseTime = d3.timeParse("%Y-%m-%d");
@@ -106,118 +316,9 @@ function drawChart(variable, containerId) {
             .on("mouseout", function(d) {
                 d3.select("#tooltip").style("opacity", 0);
             });
-    // Cargar los datos de latitud y longitud de las estaciones de AQ
-    d3.csv("data/lat_lon_beijijng_aq.csv").then(function(data) {
-        // Verificar que los datos se están cargando correctamente
-        console.log("Datos cargados:", data);
-
-        // Agregar las imágenes al mapa
-        // Continuamos desde la sección donde creamos el mapa y las imágenes
-        // Agregar las imágenes al mapa
-        g.selectAll(".station-image")
-        .data(data) // Aquí deberías usar los datos correctos, según la fuente de datos
-        .enter()
-        .append("image")
-        .attr("class", "station-image")
-        .attr("x", function(d) {
-            return projection([+d.longitude, +d.latitude])[0] - 10; // Ajusta la posición en x para centrar la imagen
-        })
-        .attr("y", function(d) {
-            return projection([+d.longitude, +d.latitude])[1] - 10; // Ajusta la posición en y para centrar la imagen
-        })
-        .attr("width", 30) // Ancho de la imagen
-        .attr("height", 30) // Altura de la imagen
-        .attr("xlink:href", "img/mark_aq.png") // Ruta a la imagen que deseas cargar
-        .on("mouseover", function(d) {
-            var stationId = d.stationId; // Obtener el station_id desde los datos
-            var formattedId = formatStationId(stationId);
-            
-            // Mostrar el tooltip
-            d3.select(this)
-            .transition()
-            .attr("width", 40) // Cambiar el ancho al pasar el mouse
-            .attr("height", 40); // Cambiar la altura al pasar el mouse
-
-            d3.select("#tooltip")
-                .style("left", (d3.event.pageX + 10) + "px")
-                .style("top", (d3.event.pageY - 20) + "px")
-                .style("opacity", 0.9)
-                .html("Estación de AQ: " + formattedId);
-        })
-        .on("mouseout", function() {
-            // Ocultar el tooltip al quitar el mouse
-            d3.select("#tooltip").style("opacity", 0);
-            d3.select(this)
-                .transition()
-                .attr("width", 30) // Restaurar el ancho al quitar el mouse
-                .attr("height", 30);
-        })       
-         
-        .on("click", function(d) {
-            // Lógica adicional al hacer clic en la imagen de la estación
-            var stationId = d.stationId; 
-            console.log("Haz clic en la imagen de la estación AQI:", stationId);
-        });
-        
-
-    }).catch(function(error) {
-        console.log("Error al cargar los datos CSV:", error); // Manejar errores de carga de datos
-    });
-
-    // Cargar los datos de latitud y longitud de las estaciones de ME0
-    d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
-        // Agregar las imágenes al mapa
-        g.selectAll(".data-image")
-            .data(data)
-            .enter()
-            .append("image")
-            .attr("class", "data-image")
-            .attr("x", function(d) {
-                // Proyectar la longitud en el sistema de coordenadas del mapa
-                return projection([+d.longitude, +d.latitude])[0] - 15; // Ajusta la posición en x para centrar la imagen
-            })
-            .attr("y", function(d) {
-                // Proyectar la latitud en el sistema de coordenadas del mapa
-                return projection([+d.longitude, +d.latitude])[1] - 15; // Ajusta la posición en y para centrar la imagen
-            })
-            .attr("station-label", function(d) {
-                return d.stationId; // Ajusta esto según tu estructura de datos
-            })
-            .attr("width", 30) // Ancho de la imagen
-            .attr("height", 30) // Altura de la imagen
-            .attr("xlink:href", "img/mark_meo.png") // Ruta a la imagen que deseas cargar
-            .on("mouseover", function(d) {
-                var stationId = d.stationId; // Obtener el station_id desde los datos
-                var formattedId = formatStationId(stationId);
-                d3.select(this)
-                .transition()
-                .attr("width", 40) // Cambiar el ancho al pasar el mouse
-                .attr("height", 40); // Cambiar la altura al pasar el mouse
     
-                // Mostrar el tooltip
-                d3.select("#tooltip")
-                    .style("left", (d3.event.pageX + 10) + "px")
-                    .style("top", (d3.event.pageY - 20) + "px")
-                    .style("opacity", 0.9)
-                    .html("Estación de Meo: " + formattedId);
-            })
-            .on("mouseout", function() {
-                // Ocultar el tooltip al quitar el mouse
-                d3.select("#tooltip").style("opacity", 0);
-                d3.select(this)
-                .transition()
-                .attr("width", 30) // Restaurar el ancho al quitar el mouse
-                .attr("height", 30);
-            })   
-            .on("click", function(d) {
-                // Lógica adicional al hacer clic en la imagen de la estación
-                var stationId = d.stationId; 
-                console.log("Haz clic en la imagen de la estación ME0:", stationId);
-            });
-    });
     });
 }
-
 variables.forEach(function(variable) {
     drawChart(variable, "chart-" + variable);
 });
@@ -418,3 +519,112 @@ d3.json("map/beijing.json")
             });
     })
     .catch(error => console.error('Error loading or parsing data:', error));
+// Cargar los datos de latitud y longitud de las estaciones de AQ
+d3.csv("data/lat_lon_beijijng_aq.csv").then(function(data) {
+    // Verificar que los datos se están cargando correctamente
+    console.log("Datos cargados:", data);
+
+    // Agregar las imágenes al mapa
+    // Continuamos desde la sección donde creamos el mapa y las imágenes
+    // Agregar las imágenes al mapa
+    g.selectAll(".station-image")
+    .data(data) // Aquí deberías usar los datos correctos, según la fuente de datos
+    .enter()
+    .append("image")
+    .attr("class", "station-image")
+    .attr("x", function(d) {
+        return projection([+d.longitude, +d.latitude])[0] - 10; // Ajusta la posición en x para centrar la imagen
+    })
+    .attr("y", function(d) {
+        return projection([+d.longitude, +d.latitude])[1] - 10; // Ajusta la posición en y para centrar la imagen
+    })
+    .attr("width", 30) // Ancho de la imagen
+    .attr("height", 30) // Altura de la imagen
+    .attr("xlink:href", "img/mark_aq.png") // Ruta a la imagen que deseas cargar
+    .on("mouseover", function(d) {
+        var stationId = d.stationId; // Obtener el station_id desde los datos
+        var formattedId = formatStationId(stationId);
+        
+        // Mostrar el tooltip
+        d3.select(this)
+        .transition()
+        .attr("width", 40) // Cambiar el ancho al pasar el mouse
+        .attr("height", 40); // Cambiar la altura al pasar el mouse
+
+        d3.select("#tooltip")
+            .style("left", (d3.event.pageX + 10) + "px")
+            .style("top", (d3.event.pageY - 20) + "px")
+            .style("opacity", 0.9)
+            .html("Estación de AQ: " + formattedId);
+    })
+    .on("mouseout", function() {
+        // Ocultar el tooltip al quitar el mouse
+        d3.select("#tooltip").style("opacity", 0);
+        d3.select(this)
+            .transition()
+            .attr("width", 30) // Restaurar el ancho al quitar el mouse
+            .attr("height", 30);
+    })       
+     
+    .on("click", function(d) {
+        var stationId = d.stationId;
+        console.log("Haz clic en la imagen de la estación AQI:", stationId);
+        updateChartsForStation(stationId); // Actualizar gráficos con la nueva estación
+    });
+    
+}).catch(function(error) {
+    console.log("Error al cargar los datos CSV:", error); // Manejar errores de carga de datos
+});
+
+
+// Cargar los datos de latitud y longitud de las estaciones de ME0
+d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
+    // Agregar las imágenes al mapa
+    g.selectAll(".data-image")
+        .data(data)
+        .enter()
+        .append("image")
+        .attr("class", "data-image")
+        .attr("x", function(d) {
+            // Proyectar la longitud en el sistema de coordenadas del mapa
+            return projection([+d.longitude, +d.latitude])[0] - 15; // Ajusta la posición en x para centrar la imagen
+        })
+        .attr("y", function(d) {
+            // Proyectar la latitud en el sistema de coordenadas del mapa
+            return projection([+d.longitude, +d.latitude])[1] - 15; // Ajusta la posición en y para centrar la imagen
+        })
+        .attr("station-label", function(d) {
+            return d.stationId; // Ajusta esto según tu estructura de datos
+        })
+        .attr("width", 30) // Ancho de la imagen
+        .attr("height", 30) // Altura de la imagen
+        .attr("xlink:href", "img/mark_meo.png") // Ruta a la imagen que deseas cargar
+        .on("mouseover", function(d) {
+            var stationId = d.stationId; // Obtener el station_id desde los datos
+            var formattedId = formatStationId(stationId);
+            d3.select(this)
+            .transition()
+            .attr("width", 40) // Cambiar el ancho al pasar el mouse
+            .attr("height", 40); // Cambiar la altura al pasar el mouse
+
+            // Mostrar el tooltip
+            d3.select("#tooltip")
+                .style("left", (d3.event.pageX + 10) + "px")
+                .style("top", (d3.event.pageY - 20) + "px")
+                .style("opacity", 0.9)
+                .html("Estación de Meo: " + formattedId);
+        })
+        .on("mouseout", function() {
+            // Ocultar el tooltip al quitar el mouse
+            d3.select("#tooltip").style("opacity", 0);
+            d3.select(this)
+            .transition()
+            .attr("width", 30) // Restaurar el ancho al quitar el mouse
+            .attr("height", 30);
+        })   
+        .on("click", function(d) {
+            var stationId = d.stationId;
+            console.log("Haz clic en la imagen de la estación ME0:", stationId);
+        });
+});
+
