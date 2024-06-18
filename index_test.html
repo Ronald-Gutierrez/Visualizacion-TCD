@@ -44,9 +44,9 @@
         }
         #weather-container {
             width: 920px;
-            top: 5px;
+            top: 450px;
             height: 400px;
-            left: 40px;
+            left: -920px;
         }
         #map-container {
             border: 1px solid #ccc;
@@ -63,8 +63,7 @@
 </head>
 <body>
 
-    <div class="quadrant-container">
-        
+    <div class="grid-container">
         <!-- Contenedor de Gráficas de Contaminantes -->
         <div id="pollutants-container" class="chart-container">
             <div id="legend-container"></div>
@@ -75,7 +74,7 @@
             <div id="chart-CO" class="chart-pollution"></div>
             <div id="chart-O3" class="chart-pollution"></div>
         </div>
-
+        
         <!-- Contenedor de Gráficas Meteorológicas -->
         <div id="weather-container" class="chart-container">
             <div id="chart-temperature" class="chart"></div>
@@ -85,13 +84,10 @@
             <div id="chart-wind_speed" class="chart"></div>
             <!-- <div id="chart-weather" class="chart"></div> -->
         </div>
-
-        <!-- Cuadrante Vacío -->
-        <!-- <div id="empty-quadrant" class="chart-container"></div> -->
     </div>
 
     <!-- Contenedor del Mapa -->
-    <div id="map-container">
+    <div id="map-container" class="chart-container">
         <div id="map"></div>
     </div>
 
@@ -101,19 +97,14 @@
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="scripts/script.js"></script>
-    <script src="scripts/script-map-beijin.js"></script>
+    <!-- <script src="scripts/script-map-beijin.js"></script> -->
     <script>
         $(function() {
-            $(".chart-container").draggable().resizable({
-                minHeight: 150,
-                minWidth: 200
-            });
-            $("#map-container").draggable().resizable({
+            $(".chart-container, #map-container").draggable().resizable({
                 minHeight: 150,
                 minWidth: 200
             });
         });
     </script>
-
 </body>
 </html>
