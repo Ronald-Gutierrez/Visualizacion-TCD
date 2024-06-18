@@ -324,7 +324,7 @@ variables.forEach(function(variable) {
 });
 
 var svgLegend = d3.select("#legend-container").append("svg")
-    .attr("width", 1500)
+    .attr("width", 900)
     .attr("height", 50)
   .append("g")
     .attr("transform", "translate(" + margin.left + ",0)");
