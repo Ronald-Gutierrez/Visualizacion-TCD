@@ -1,5 +1,5 @@
 var margin = { top: 50, right: 20, bottom: 34, left: 80 },
-    width = 860 - margin.left - margin.right,
+    width = 880 - margin.left - margin.right,
     height = 150 - margin.top - margin.bottom;
 
 var x = d3.scaleTime().range([0, width]);
@@ -71,7 +71,7 @@ function drawChart(variable, containerId, stationId) {
             .enter()
             .append("circle")
             .attr("class", "dot")
-            .attr("r", 5)
+            .attr("r", 3)
             .attr("cx", function(d) { return x(d.date); })
             .attr("cy", function(d) { return y(d[variable]); })
             .style("fill", function(d) { return color(d[variable]); })
@@ -87,7 +87,7 @@ function drawChart(variable, containerId, stationId) {
                 drawHourlyChart(variable, "popup-chart-container", stationId, d.date);
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
-                    .attr("r", 5)
+                    .attr("r", 3)
                     .style("stroke", null);
             
                 // Si el punto no estaba ampliado, ampliarlo y resaltar otros puntos
@@ -229,7 +229,7 @@ function updateChartsForStation(stationId) {
                 .merge(dots) // Fusionar puntos nuevos y existentes
                 .transition()
                 .duration(500)
-                .attr("r", 5)
+                .attr("r", 3)
                 .attr("cx", function(d) { return x(d.date); })
                 .attr("cy", function(d) { return y(d[variable]); })
                 .style("fill", function(d) { return color(d[variable]); });
@@ -281,7 +281,7 @@ function UpdateChart(variable, containerId, stationId) {
             .enter()
             .append("circle")
             .attr("class", "dot")
-            .attr("r", 5)
+            .attr("r", 3)
             .attr("cx", function(d) { return x(d.date); })
             .attr("cy", function(d) { return y(d[variable]); })
             .style("fill", function(d) { return color(d[variable]); })
@@ -291,7 +291,7 @@ function UpdateChart(variable, containerId, stationId) {
             
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
-                    .attr("r", 5)
+                    .attr("r", 3)
                     .style("stroke", null);
             
                 // Si el punto no estaba ampliado, ampliarlo y resaltar otros puntos
@@ -364,7 +364,7 @@ function showTimeSeries(date) {
 function updateOtherCharts(date) {
     // Vuelve al tamaño original todos los puntos de todas las gráficas y elimina el borde amarillo
     d3.selectAll(".dot")
-        .attr("r", 5) // Vuelve al tamaño original
+        .attr("r", 3) // Vuelve al tamaño original
         .style("stroke", null); // Elimina el borde amarillo
         
 
@@ -400,7 +400,7 @@ function drawWeatherChart(attribute, containerId) {
         .attr("y", 0 - (margin.top / 2))
         .attr("text-anchor", "start")
         .style("font-size", "16px")
-        .style("text-decoration", "underline")
+        .style("text-decoration", "")
         .text(attribute);
 
     d3.csv("data/beijing_17_18_meo.csv").then(function(data) {
@@ -468,8 +468,8 @@ function drawWeatherChart(attribute, containerId) {
 //
 // Create an SVG element to contain the map
 // Define the dimensions of the map
-const width_MAP = 1000;
-const height_MAP = 1000;
+const width_MAP = 800;
+const height_MAP = 1100;
 
 // Create an SVG element to contain the map
 const svg = d3.select("#map").append("svg")

@@ -3,72 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cuatro Cuadrantes</title>
+    <title>Visualización de Contaminantes y Datos Meteorológicos de Beijing</title>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="css/styles.css">
-
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-        }
-
-        .container {
+        .quadrant-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+            grid-template-columns: 1fr; /* Una columna */
+            grid-template-rows: 1fr 1fr 1fr; /* Tres filas */
+            width: 50vw;
             height: 100vh;
+            grid-gap: 20px;
+            float: left;
         }
+        .chart-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow: auto;  
+            
+        }
+        .chart {
+            top: 500px;
+            margin-bottom: -50px;
+            margin-top: 20px;
+            margin-left: 0px;
 
-        .box {
-            border: 1px solid #000;
-            box-sizing: border-box;
-            text-align: center;
         }
-        .grid-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr; /* Dos columnas */
-      grid-gap: 20px;
-    }
-    #charts-container {
-      grid-column: 1 / 2; /* Ocupa de la primera a la segunda columna */
-    }
-    #image-container {
-      grid-column: 2 / 3; /* Ocupa de la segunda a la tercera columna */
-      text-align: right;
-    }
+        .chart-pollution {
+            top: 500px;
+            margin-bottom: -30px;
+            margin-top: -35px;
+            margin-left: 0px;
+
+        }
+        #pollutants-container {
+            width: 920px;
+            height: 400px;
+            top: 10px;
+            left: 40px;
+        }
+        #weather-container {
+            width: 920px;
+            top: 5px;
+            height: 400px;
+            left: 40px;
+        }
+        #map-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow: auto;
+            position: absolute;
+            width: 820px;
+            top: 18px;
+            height: 837px;
+            left: 1000px;
+            
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="box">
+
+    <div class="quadrant-container">
+        <!-- Contenedor de Gráficas de Contaminantes -->
+        <div id="pollutants-container" class="chart-container">
             <div id="legend-container"></div>
-            <div id="chart-PM2_5" class="chart"></div>
-            <div id="chart-PM10" class="chart"></div>
-            <div id="chart-SO2" class="chart"></div>
-            <div id="chart-NO2" class="chart"></div>
-            <div id="chart-CO" class="chart"></div>
-            <div id="chart-O3" class="chart"></div>
+            <div id="chart-PM2_5" class="chart-pollution"></div>
+            <div id="chart-PM10" class="chart-pollution"></div>
+            <div id="chart-SO2" class="chart-pollution"></div>
+            <div id="chart-NO2" class="chart-pollution"></div>
+            <div id="chart-CO" class="chart-pollution"></div>
+            <div id="chart-O3" class="chart-pollution"></div>
         </div>
-        <div class="box">
-            <div id="map"></div>
-        </div>
-        <div class="box">
+
+        <!-- Contenedor de Gráficas Meteorológicas -->
+        <div id="weather-container" class="chart-container">
             <div id="chart-temperature" class="chart"></div>
             <div id="chart-pressure" class="chart"></div>
             <div id="chart-humidity" class="chart"></div>
-            <div id="chart-wind_direction" class="chart"></div>
+            <!-- <div id="chart-wind_direction" class="chart"></div> -->
             <div id="chart-wind_speed" class="chart"></div>
-            <div id="chart-weather" class="chart"></div>
+            <!-- <div id="chart-weather" class="chart"></div> -->
         </div>
-        <div class="box">
-            <div id="map"></div>
-            <h2>Sección 2</h2>
-        </div>
-        <div id="tooltip" class="tooltip"></div>
 
+        <!-- Cuadrante Vacío -->
+        <!-- <div id="empty-quadrant" class="chart-container"></div> -->
     </div>
+
+    <!-- Contenedor del Mapa -->
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="scripts/script.js"></script>
+    <script src="scripts/script-map-beijin.js"></script>
+    <script>
+        $(function() {
+            $(".chart-container").draggable().resizable({
+                minHeight: 150,
+                minWidth: 200
+            });
+            $("#map-container").draggable().resizable({
+                minHeight: 150,
+                minWidth: 200
+            });
+        });
+    </script>
+
 </body>
 </html>
