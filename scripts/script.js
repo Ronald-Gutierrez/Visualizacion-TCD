@@ -504,17 +504,17 @@ d3.json("map/beijing.json")
             .data(data.features)
             .enter().append("path")
             .attr("d", path)
-            .attr("fill", "#69b3a2")
+            .attr("fill", "#c6dbef")
             .attr("stroke", "#000")
             .attr("stroke-width", 1)
             .on("mouseover", function(event, d) {
                 d3.select(this)
-                    .attr("fill", "#ffcc00")
+                    .attr("fill", "#9ecae1")
                     .attr("stroke-width", 2);
             })
             .on("mouseout", function(event, d) {
                 d3.select(this)
-                    .attr("fill", "#69b3a2")
+                    .attr("fill", "#c6dbef")
                     .attr("stroke-width", 1);
             });
     })
