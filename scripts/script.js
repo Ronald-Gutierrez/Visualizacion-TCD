@@ -27,7 +27,28 @@ function formatStationId(stationId) {
 
     return formattedId;
 }
-updateChartsForStation("dingling_aq");
+function brushed() {
+    if (!d3.event.sourceEvent) return; // Solo manejar eventos interactivos
+    if (!d3.event.selection) return; // No hacer nada si no hay selección
+
+    var extent = d3.event.selection.map(x.invert, x); // Convertir el píxel a dominio
+
+    // Actualizar el dominio del eje X en el gráfico principal
+    x.domain(extent);
+
+    // Actualizar el eje X y redibujar los puntos en el gráfico principal
+    svg.select(".x.axis").call(d3.axisBottom(x));
+    svg.selectAll(".dot")
+        .attr("cx", function(d) { return x(d.date); })
+        .attr("cy", function(d) { return y(d[variable]); });
+
+    // Obtener las fechas seleccionadas
+    var startDate = extent[0];
+    var endDate = extent[1];
+
+    // Llamar a la función para dibujar el gráfico de horas en el contenedor deseado
+    drawHourlyChart(variable, "chart-hour-pollution", stationId, startDate, endDate);
+}
 
 function drawChart(variable, containerId, stationId) {
     var svg = d3.select("#" + containerId).append("svg")
@@ -36,6 +57,20 @@ function drawChart(variable, containerId, stationId) {
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+
+ /// PARA EL BRUSH EXPANCION DE LA SERIE TEMPORAL
+    var brush = d3.brushX()
+        .extent([[0, 0], [width, height]])
+        .on("end", brushed);
+
+    svg.append("g")
+        .attr("class", "brush")
+        .call(brush)
+      .selectAll("rect")
+        .attr("height", height);
+
+
+    ///////////////////////////
     svg.append("text")
         .attr("x", -70)
         .attr("y", 30)
@@ -382,17 +417,20 @@ function updateOtherCharts(date) {
 //=======================================================================================================
 //VIZUALIZACION DE METOROLOGIA
 //
-
 var weatherAttributes = ["temperature", "pressure", "humidity", "wind_direction", "wind_speed"];
 weatherAttributes.forEach(function(attribute) {
     drawWeatherChart(attribute, "chart-" + attribute);
 });
 
 function drawWeatherChart(attribute, containerId) {
-    var svg = d3.select("#" + containerId).append("svg")
+    // Limpiar el contenedor antes de dibujar el nuevo gráfico
+    d3.select("#" + containerId).select("svg").remove();
+
+    var svg = d3.select("#" + containerId)
+        .append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
-      .append("g")
+        .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     svg.append("text")
@@ -400,21 +438,21 @@ function drawWeatherChart(attribute, containerId) {
         .attr("y", 0 - (margin.top / 2))
         .attr("text-anchor", "start")
         .style("font-size", "16px")
-        .style("text-decoration", "")
         .text(attribute);
 
-    d3.csv("data/beijing_17_18_meo.csv").then(function(data) {
+    // Cargar los datos iniciales para la estación miyun_meo
+    d3.csv("data/daily_meo_output.csv").then(function(data) {
         data = data.filter(function(d) {
-            return d.station_id === "shunyi_meo";
+            return d.station_id === "miyun_meo";
         });
 
-        var parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+        var parseTime = d3.timeParse("%Y-%m-%d");
         data.forEach(function(d) {
-            d.utc_time = parseTime(d.utc_time);
+            d.date = parseTime(d.date);
             d[attribute] = +d[attribute];
         });
 
-        x.domain(d3.extent(data, function(d) { return d.utc_time; })).nice();
+        x.domain(d3.extent(data, function(d) { return d.date; })).nice();
         if (attribute === "wind_direction") {
             y.domain([0, 90, 180, 270, 360]);
         } else {
@@ -432,37 +470,133 @@ function drawWeatherChart(attribute, containerId) {
 
         svg.append("path")
             .datum(data)
+            .attr("class", "line")
             .attr("fill", "none")
             .attr("stroke", "steelblue")
             .attr("stroke-width", 1.5)
             .attr("d", d3.line()
-                .x(function(d) { return x(d.utc_time) })
-                .y(function(d) { return y(d[attribute]) })
+                .x(function(d) { return x(d.date); })
+                .y(function(d) { return y(d[attribute]); })
             );
 
-        // svg.selectAll(".dot")
-        //     .data(data)
-        //     .enter()
-        //     .append("circle")
-        //     .attr("class", "dot")
-        //     .attr("r", 5)
-        //     .attr("cx", function(d) { return x(d.utc_time); })
-        //     .attr("cy", function(d) { return y(d[attribute]); })
-        //     .style("fill", "red")
-        //     .style("opacity", 0)
-        //     .on("mouseover", function(d) {
-        //         var tooltip = d3.select("#tooltip")
-        //             .style("left", (d3.event.pageX + 10) + "px")
-        //             .style("top", (d3.event.pageY - 20) + "px")
-        //             .style("opacity", 0.9);
-        //         tooltip.html("Fecha: " + formatDate(d.utc_time) + "<br/>" +
-        //                      "Valor de " + attribute + ": " + d[attribute]);
-        //     })
-        //     .on("mouseout", function(d) {
-        //         d3.select("#tooltip").style("opacity", 0);
-        //     });
+        svg.selectAll(".dot")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("class", "dot")
+            .attr("r", 5)
+            .attr("cx", function(d) { return x(d.date); })
+            .attr("cy", function(d) { return y(d[attribute]); })
+            .style("fill", "red")
+            .style("opacity", 0)
+            .on("mouseover", function(d) {
+                var tooltip = d3.select("#tooltip")
+                    .style("left", (d3.event.pageX + 10) + "px")
+                    .style("top", (d3.event.pageY - 20) + "px")
+                    .style("opacity", 0.9);
+                tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
+                    "Valor de " + attribute + ": " + d[attribute]);
+            })
+            .on("mouseout", function(d) {
+                d3.select("#tooltip").style("opacity", 0);
+            });
     });
 }
+function updateWeatherChartForStation(stationId) {
+    var weatherAttributes = ["temperature", "pressure", "humidity", "wind_direction", "wind_speed"];
+
+    weatherAttributes.forEach(function(attribute) {
+        var svg = d3.select("#chart-" + attribute).select("svg").select("g");
+
+        // Obtener datos actualizados para la estación seleccionada
+        d3.csv("data/daily_meo_output.csv").then(function(data) {
+            data = data.filter(function(d) {
+                return d.station_id === stationId;
+            });
+
+            var parseTime = d3.timeParse("%Y-%m-%d");
+            data.forEach(function(d) {
+                d.date = parseTime(d.date);
+                d[attribute] = +d[attribute];
+            });
+
+            // Actualizar dominios y ejes
+            x.domain(d3.extent(data, function(d) { return d.date; })).nice();
+            if (attribute === "wind_direction") {
+                y.domain([0, 90, 180, 270, 360]);
+            } else {
+                y.domain(d3.extent(data, function(d) { return d[attribute]; })).nice();
+            }
+
+            // Seleccionar el grupo SVG y aplicar transiciones a los ejes
+            svg.select(".x.axis")
+                .transition()
+                .duration(500)
+                .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%Y-%m-%d")));
+
+            svg.select(".y.axis")
+                .transition()
+                .duration(500)
+                .call(d3.axisLeft(y).ticks(7));
+
+            // Actualizar la línea
+            var line = d3.line()
+                .x(function(d) { return x(d.date); })
+                .y(function(d) { return y(d[attribute]); });
+
+            var path = svg.selectAll(".line")
+                .data([data]);
+
+            // Eliminar línea antigua y agregar nueva
+            path.exit().remove();
+
+            path.enter()
+                .append("path")
+                .attr("class", "line")
+                .merge(path)
+                .transition()
+                .duration(500)
+                .attr("d", line)
+                .attr("fill", "none")
+                .attr("stroke", "steelblue")
+                .attr("stroke-width", 1.5);
+
+            // Actualizar puntos
+            var dots = svg.selectAll(".dot")
+                .data(data);
+
+            // Eliminar puntos antiguos
+            dots.exit().remove();
+
+            // Añadir nuevos puntos
+            dots.enter()
+                .append("circle")
+                .attr("class", "dot")
+                .merge(dots) // Fusionar puntos nuevos y existentes
+                .transition()
+                .duration(500)
+                .attr("r", 5)
+                .attr("cx", function(d) { return x(d.date); })
+                .attr("cy", function(d) { return y(d[attribute]); })
+                .style("fill", "red")
+                .style("opacity", 0)
+                .on("mouseover", function(d) {
+                    var tooltip = d3.select("#tooltip")
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 20) + "px")
+                        .style("opacity", 0.9);
+                    tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
+                        "Valor de " + attribute + ": " + d[attribute]);
+                })
+                .on("mouseout", function(d) {
+                    d3.select("#tooltip").style("opacity", 0);
+                });
+        });
+    });
+}
+
+
+
 //=======================================================================================================
 //VIZUALIZACION DE MAPA
 //
@@ -490,8 +624,8 @@ svg.call(zoom);
 // Define a projection to convert GeoJSON coordinates to screen coordinates
 const projection = d3.geoMercator()
     .center([116.4074, 39.9042]) // Center the map on Beijing
-    .scale(20000) // Adjust the scale to fit the map size
-    .translate([width_MAP / 2, height_MAP / 2]);
+    .scale(14000) // Adjust the scale to fit the map size
+    .translate([width_MAP / 3, height_MAP / 2.9]);
 
 // Define a path generator to convert GeoJSON paths to SVG paths
 const path = d3.geoPath().projection(projection);
@@ -538,8 +672,8 @@ d3.csv("data/lat_lon_beijijng_aq.csv").then(function(data) {
     .attr("y", function(d) {
         return projection([+d.longitude, +d.latitude])[1] - 10; // Ajusta la posición en y para centrar la imagen
     })
-    .attr("width", 30) // Ancho de la imagen
-    .attr("height", 30) // Altura de la imagen
+    .attr("width", 20) // Ancho de la imagen
+    .attr("height", 20) // Altura de la imagen
     .attr("xlink:href", "img/mark_aq.png") // Ruta a la imagen que deseas cargar
     .on("mouseover", function(d) {
         var stationId = d.stationId; // Obtener el station_id desde los datos
@@ -548,8 +682,8 @@ d3.csv("data/lat_lon_beijijng_aq.csv").then(function(data) {
         // Mostrar el tooltip
         d3.select(this)
         .transition()
-        .attr("width", 40) // Cambiar el ancho al pasar el mouse
-        .attr("height", 40); // Cambiar la altura al pasar el mouse
+        .attr("width", 30) // Cambiar el ancho al pasar el mouse
+        .attr("height", 30); // Cambiar la altura al pasar el mouse
 
         d3.select("#tooltip")
             .style("left", (d3.event.pageX + 10) + "px")
@@ -562,8 +696,8 @@ d3.csv("data/lat_lon_beijijng_aq.csv").then(function(data) {
         d3.select("#tooltip").style("opacity", 0);
         d3.select(this)
             .transition()
-            .attr("width", 30) // Restaurar el ancho al quitar el mouse
-            .attr("height", 30);
+            .attr("width", 20) // Restaurar el ancho al quitar el mouse
+            .attr("height", 20);
     })       
      
     .on("click", function(d) {
@@ -596,16 +730,16 @@ d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
         .attr("station-label", function(d) {
             return d.stationId; // Ajusta esto según tu estructura de datos
         })
-        .attr("width", 30) // Ancho de la imagen
-        .attr("height", 30) // Altura de la imagen
+        .attr("width", 20) // Ancho de la imagen
+        .attr("height", 20) // Altura de la imagen
         .attr("xlink:href", "img/mark_meo.png") // Ruta a la imagen que deseas cargar
         .on("mouseover", function(d) {
             var stationId = d.stationId; // Obtener el station_id desde los datos
             var formattedId = formatStationId(stationId);
             d3.select(this)
             .transition()
-            .attr("width", 40) // Cambiar el ancho al pasar el mouse
-            .attr("height", 40); // Cambiar la altura al pasar el mouse
+            .attr("width", 30) // Cambiar el ancho al pasar el mouse
+            .attr("height", 30); // Cambiar la altura al pasar el mouse
 
             // Mostrar el tooltip
             d3.select("#tooltip")
@@ -619,12 +753,14 @@ d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
             d3.select("#tooltip").style("opacity", 0);
             d3.select(this)
             .transition()
-            .attr("width", 30) // Restaurar el ancho al quitar el mouse
-            .attr("height", 30);
+            .attr("width", 20) // Restaurar el ancho al quitar el mouse
+            .attr("height", 20);
         })   
         .on("click", function(d) {
             var stationId = d.stationId;
             console.log("Haz clic en la imagen de la estación ME0:", stationId);
+            updateWeatherChartForStation(stationId); // Actualizar gráficos con la nueva estación
+
         });
 });
 

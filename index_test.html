@@ -46,16 +46,22 @@
             width: 920px;
             top: 450px;
             height: 400px;
-            left: -920px;
+            left: -924px;
+        }
+        #chart-hour-pollution{
+            width: 811px;
+            height: 260px;
+            top: -410px;
+            left: 1000px;
         }
         #map-container {
             border: 1px solid #ccc;
             padding: 10px;
             overflow: auto;
             position: absolute;
-            width: 820px;
-            top: 18px;
-            height: 837px;
+            width: 560px;
+            top: 318px;
+            height: 537px;
             left: 1000px;
             
         }
@@ -74,7 +80,7 @@
             <div id="chart-CO" class="chart-pollution"></div>
             <div id="chart-O3" class="chart-pollution"></div>
         </div>
-        
+
         <!-- Contenedor de Gráficas Meteorológicas -->
         <div id="weather-container" class="chart-container">
             <div id="chart-temperature" class="chart"></div>
@@ -90,6 +96,12 @@
     <div id="map-container" class="chart-container">
         <div id="map"></div>
     </div>
+        <!-- Visor por hora de los contaminantes -->
+    <!-- Visor por hora de los contaminantes -->
+    <div id="chart-hour-pollution" class="chart-container">
+        <div id="chart-for-hour" class="chart-for-hour"> Vizualizacion por hora de los contaminantes</div>
+    </div>
+    
 
     <div id="tooltip" class="tooltip"></div>
 
@@ -105,6 +117,8 @@
                 minWidth: 200
             });
         });
+        
+        
     </script>
 </body>
 </html>
