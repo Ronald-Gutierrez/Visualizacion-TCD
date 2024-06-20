@@ -27,6 +27,7 @@ function formatStationId(stationId) {
 
     return formattedId;
 }
+
 function brushed() {
     if (!d3.event.sourceEvent) return; // Solo manejar eventos interactivos
     if (!d3.event.selection) return; // No hacer nada si no hay selección
@@ -36,18 +37,11 @@ function brushed() {
     // Actualizar el dominio del eje X en el gráfico principal
     x.domain(extent);
 
-    // Actualizar el eje X y redibujar los puntos en el gráfico principal
+    // Actualizar el eje X y redibujar los puntos
     svg.select(".x.axis").call(d3.axisBottom(x));
     svg.selectAll(".dot")
         .attr("cx", function(d) { return x(d.date); })
         .attr("cy", function(d) { return y(d[variable]); });
-
-    // Obtener las fechas seleccionadas
-    var startDate = extent[0];
-    var endDate = extent[1];
-
-    // Llamar a la función para dibujar el gráfico de horas en el contenedor deseado
-    drawHourlyChart(variable, "chart-hour-pollution", stationId, startDate, endDate);
 }
 
 function drawChart(variable, containerId, stationId) {
@@ -60,17 +54,31 @@ function drawChart(variable, containerId, stationId) {
 
  /// PARA EL BRUSH EXPANCION DE LA SERIE TEMPORAL
     var brush = d3.brushX()
-        .extent([[0, 0], [width, height]])
-        .on("end", brushed);
+    .extent([[0, 0], [width, height]])  // Ajusta la extensión solo en el eje X
+    .on("end", brushed);
 
     svg.append("g")
         .attr("class", "brush")
         .call(brush)
       .selectAll("rect")
         .attr("height", height);
+        // function brushed() {
+        //     if (!d3.event.sourceEvent) return; // Solo manejar eventos interactivos
+        //     if (!d3.event.selection) return; // No hacer nada si no hay selección
+        
+        //     var extent = d3.event.selection.map(x.invert, x); // Convertir el píxel a dominio
+        
+        //     // Solo actualizar el dominio en el eje X (horizontal)
+        //     x.domain(extent);
+        
+        //     // Redibujar el eje X y los puntos
+        //     svg.select(".x.axis").call(d3.axisBottom(x));
+        //     svg.selectAll(".dot")
+        //         .attr("cx", function(d) { return x(d.date); }); // Solo actualizar la posición X
+        // }
+        
 
-
-    ///////////////////////////
+    /////////////////////////
     svg.append("text")
         .attr("x", -70)
         .attr("y", 30)
