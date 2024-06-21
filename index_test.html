@@ -29,6 +29,7 @@
             margin-left: 0px;
 
         }
+        
         .chart-pollution {
             top: 500px;
             margin-bottom: -30px;
@@ -50,19 +51,19 @@
         }
         #chart-hour-pollution{
             width: 811px;
-            height: 260px;
+            height: 160px;
             top: -410px;
             left: 1000px;
         }
         #map-container {
-            border: 1px solid #ccc;
+            border: 1px solid #131313;
             padding: 10px;
-            overflow: auto;
+            overflow: hidden; /* Evita el scroll */
             position: absolute;
-            width: 560px;
-            top: 318px;
-            height: 537px;
-            left: 1000px;
+            width: 660px;
+            top: 218px;
+            height: 637px;
+            left: 1010px;
             
         }
     </style>
@@ -93,13 +94,14 @@
     </div>
 
     <!-- Contenedor del Mapa -->
-    <div id="map-container" class="chart-container">
+    <div id="map-container" class="chart-container-map">
         <div id="map"></div>
     </div>
         <!-- Visor por hora de los contaminantes -->
     <!-- Visor por hora de los contaminantes -->
     <div id="chart-hour-pollution" class="chart-container">
-        <div id="chart-for-hour" class="chart-for-hour"> Vizualizacion por hora de los contaminantes</div>
+        <div id="chart-for-hour" class="chart-for-hour"> </div>
+        
     </div>
     
 
