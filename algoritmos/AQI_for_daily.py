@@ -3,53 +3,54 @@ import pandas as pd
 # Leer los datos del CSV
 data = pd.read_csv('data/beijing_17_18_aq.csv')
 
-# Valores específicos para cada contaminante según la regulación de contaminantes del aire HJ633-2012 en Beijing
+# Valores específicos para cada contaminante según la tabla proporcionada
 BPLo_values = {
-    'PM2.5': 0,
-    'PM10': 0,
-    'SO2': 0,
-    'NO2': 0,
-    'CO': 0,
-    'O3': 0
+    'PM2.5': [0, 35, 75, 115, 150, 250],
+    'PM10': [0, 50, 150, 250, 350, 420],
+    'SO2': [0, 50, 150, 475, 800, 1600],
+    'NO2': [0, 40, 80, 180, 280, 565],
+    'CO': [0, 2, 4, 14, 24, 36],
+    'O3': [0, 160, 200, 300, 400, 800]
 }
 
 BPHi_values = {
-    'PM2.5': 75,
-    'PM10': 150,
-    'SO2': 150,
-    'NO2': 100,
-    'CO': 5,
-    'O3': 300
+    'PM2.5': [35, 75, 115, 150, 250, 350],
+    'PM10': [50, 150, 250, 350, 420, 500],
+    'SO2': [50, 150, 475, 800, 1600, 2100],
+    'NO2': [40, 80, 180, 280, 565, 750],
+    'CO': [2, 4, 14, 24, 36, 48],
+    'O3': [160, 200, 300, 400, 800, 1000]
 }
 
 IAQILo_values = {
-    'PM2.5': 0,
-    'PM10': 0,
-    'SO2': 0,
-    'NO2': 0,
-    'CO': 0,
-    'O3': 0
+    'PM2.5': [0, 50, 100, 150, 200, 300],
+    'PM10': [0, 50, 100, 150, 200, 300],
+    'SO2': [0, 50, 100, 150, 200, 300],
+    'NO2': [0, 50, 100, 150, 200, 300],
+    'CO': [0, 50, 100, 150, 200, 300],
+    'O3': [0, 50, 100, 150, 200, 300]
 }
 
 IAQIHi_values = {
-    'PM2.5': 200,
-    'PM10': 200,
-    'SO2': 200,
-    'NO2': 200,
-    'CO': 200,
-    'O3': 200
+    'PM2.5': [50, 100, 150, 200, 300, 400],
+    'PM10': [50, 100, 150, 200, 300, 400],
+    'SO2': [50, 100, 150, 200, 300, 400],
+    'NO2': [50, 100, 150, 200, 300, 400],
+    'CO': [50, 100, 150, 200, 300, 400],
+    'O3': [50, 100, 150, 200, 300, 400]
 }
 
 # Calcular IAQI para cada contaminante
 def calculate_IAQI(concentration, pollutant):
-    BPLo = BPLo_values[pollutant]
-    BPHi = BPHi_values[pollutant]
-    IAQILo = IAQILo_values[pollutant]
-    IAQIHi = IAQIHi_values[pollutant]
-    
-    # Calcular IAQI según la fórmula proporcionada
-    IAQIp = ((IAQIHi - IAQILo) / (BPHi - BPLo)) * (concentration - BPLo) + IAQILo
-    return IAQIp
+    for i in range(len(BPLo_values[pollutant])):
+        if BPLo_values[pollutant][i] <= concentration <= BPHi_values[pollutant][i]:
+            BPLo = BPLo_values[pollutant][i]
+            BPHi = BPHi_values[pollutant][i]
+            IAQILo = IAQILo_values[pollutant][i]
+            IAQIHi = IAQIHi_values[pollutant][i]
+            IAQIp = ((IAQIHi - IAQILo) / (BPHi - BPLo)) * (concentration - BPLo) + IAQILo
+            return IAQIp
+    return None  # Si la concentración no se encuentra en ningún rango, devolver None
 
 # Función para clasificar el AQI en niveles del 1 al 6
 def classify_AQI(aqi):
@@ -86,4 +87,4 @@ for pollutant in ['PM2.5', 'PM10', 'NO2', 'CO', 'O3', 'SO2']:
     grouped_data[f'{pollutant}'] = grouped_data[f'{pollutant}_IAQI'].apply(classify_AQI)
 
 # Guardar los resultados en un nuevo archivo CSV
-grouped_data.to_csv('daily_aqi_output.csv', columns=['stationId', 'date', 'PM2.5', 'PM10', 'NO2', 'CO', 'O3', 'SO2'], index=False)
+grouped_data.to_csv('data/real-daily_aqi_output.csv', columns=['stationId', 'date', 'PM2.5', 'PM10', 'NO2', 'CO', 'O3', 'SO2'], index=False)

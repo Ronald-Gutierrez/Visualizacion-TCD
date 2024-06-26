@@ -48,7 +48,7 @@ function drawChart(variable, containerId, stationId) {
     
     var data; // Variable global para almacenar los datos
 
-    d3.csv("data/daily_aqi_output.csv").then(function(csvData) {
+    d3.csv("data/real-daily_aqi_output.csv").then(function(csvData) {
         data = csvData; // Asignar los datos cargados a la variable global
         var stationId = "yufa_aq"; // Por ejemplo, asegúrate de definirlo adecuadamente
 
