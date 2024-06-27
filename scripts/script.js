@@ -688,18 +688,30 @@ function updateMapWithDate(selectedDate, stationData) {
                 return aqiColorScale(aqiValue);
             })
             .style("opacity", 0.8) // Opacidad del círculo
-            .on("mouseover", function() {
+            .on("mouseover", function(d) {
+                var stationId = d.stationId; // Obtener el station_id desde los datos
+                var formattedId = formatStationId(stationId);
+                
+                // Mostrar el tooltip
                 d3.select(this)
-                    .transition()
-                    .duration(200) // Duración de la transición en milisegundos
-                    .attr("r", 7); // Nuevo radio al pasar el mouse sobre el círculo
+                .transition()
+                .attr("width", 30) // Cambiar el ancho al pasar el mouse
+                .attr("height", 30); // Cambiar la altura al pasar el mouse
+        
+                d3.select("#tooltip")
+                    .style("left", (d3.event.pageX + 10) + "px")
+                    .style("top", (d3.event.pageY - 20) + "px")
+                    .style("opacity", 0.9)
+                    .html("Estación de AQ: " + formattedId);
             })
             .on("mouseout", function() {
+                // Ocultar el tooltip al quitar el mouse
+                d3.select("#tooltip").style("opacity", 0);
                 d3.select(this)
                     .transition()
-                    .duration(200) // Duración de la transición en milisegundos
-                    .attr("r", 5); // Restaurar el radio original al quitar el mouse del círculo
-            })
+                    .attr("width", 20) // Restaurar el ancho al quitar el mouse
+                    .attr("height", 20);
+            })     
             .on("click", function(d) {
                 var stationId = d.stationId;
                 console.log("Haz clic en la estación AQI:", stationId);
