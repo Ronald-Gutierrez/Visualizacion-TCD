@@ -6,7 +6,7 @@ output_file = 'data/aqi_general_for_day.csv'
 
 df = pd.read_csv(input_file)
 
-# Calcular el AQI general para cada contaminante por ciudad y por día
+# Calcular el AQI general para cada día por ciudad
 district_daily_aqi = df.groupby(['stationId', 'date']).agg({
     'PM2_5': 'max',
     'PM10': 'max',
@@ -16,8 +16,11 @@ district_daily_aqi = df.groupby(['stationId', 'date']).agg({
     'SO2': 'max'
 }).reset_index()
 
-# Renombrar columnas para reflejar que son valores de AQI
-district_daily_aqi.columns = ['stationId', 'date', 'AQI_PM2_5', 'AQI_PM10', 'AQI_NO2', 'AQI_CO', 'AQI_O3', 'AQI_SO2']
+# Calcular el AQI general como el máximo de los AQIs individuales de los contaminantes
+district_daily_aqi['AQI_general'] = district_daily_aqi[['PM2_5', 'PM10', 'NO2', 'CO', 'O3', 'SO2']].max(axis=1)
+
+# Seleccionar solo las columnas necesarias
+district_daily_aqi = district_daily_aqi[['stationId', 'date', 'AQI_general']]
 
 # Guardar resultados en un archivo CSV
 district_daily_aqi.to_csv(output_file, index=False)

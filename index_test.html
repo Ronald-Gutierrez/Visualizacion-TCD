@@ -66,6 +66,12 @@
             left: 1010px;
             
         }
+        #date-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000; /* Asegura que esté encima del mapa */
+        }
     </style>
 </head>
 <body>
@@ -93,34 +99,40 @@
         </div>
     </div>
 
-    <!-- Contenedor del Mapa -->
-    <div id="map-container" class="chart-container-map">
-        <div id="map"></div>
+<!-- Contenedor del Mapa -->
+<div id="map-container" class="chart-container-map">
+    <div id="date-selector">
+        <label for="datepicker">Selecciona una fecha:</label>
+        <input type="text" id="datepicker">
     </div>
-        <!-- Visor por hora de los contaminantes -->
+    <div id="map"></div>
+</div>
+
+    
+    <!-- Selector de Fecha -->
+
+    
     <!-- Visor por hora de los contaminantes -->
     <div id="chart-hour-pollution" class="chart-container">
         <div id="chart-for-hour" class="chart-for-hour"> </div>
-        
     </div>
     
-
     <div id="tooltip" class="tooltip"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="scripts/script.js"></script>
-    <!-- <script src="scripts/script-map-beijin.js"></script> -->
     <script>
         $(function() {
             $(".chart-container, #map-container").draggable().resizable({
                 minHeight: 150,
                 minWidth: 200
             });
+
+            // Configuración del datepicker
+
         });
-        
-        
     </script>
 </body>
 </html>

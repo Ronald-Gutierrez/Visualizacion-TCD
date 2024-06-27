@@ -652,63 +652,121 @@ d3.json("map/beijing.json")
             });
     })
     .catch(error => console.error('Error loading or parsing data:', error));
-// Cargar los datos de latitud y longitud de las estaciones de AQ
-d3.csv("data/lat_lon_beijijng_aq.csv").then(function(data) {
-    // Verificar que los datos se están cargando correctamente
-    console.log("Datos cargados:", data);
+// Función para cargar los datos y actualizar los puntos en el mapa según la fecha seleccionada
+function updateMapWithDate(selectedDate, stationData) {
+    // Cargar los datos de AQI general por día
+    d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
+        // Filtrar los datos de AQI para la fecha seleccionada
+        var filteredData = aqiData.filter(function(d) {
+            return d.date === selectedDate;
+        });
 
-    // Agregar las imágenes al mapa
-    // Continuamos desde la sección donde creamos el mapa y las imágenes
-    // Agregar las imágenes al mapa
-    g.selectAll(".station-image")
-    .data(data) // Aquí deberías usar los datos correctos, según la fuente de datos
-    .enter()
-    .append("image")
-    .attr("class", "station-image")
-    .attr("x", function(d) {
-        return projection([+d.longitude, +d.latitude])[0] - 10; // Ajusta la posición en x para centrar la imagen
-    })
-    .attr("y", function(d) {
-        return projection([+d.longitude, +d.latitude])[1] - 10; // Ajusta la posición en y para centrar la imagen
-    })
-    .attr("width", 20) // Ancho de la imagen
-    .attr("height", 20) // Altura de la imagen
-    .attr("xlink:href", "img/mark_aq.png") // Ruta a la imagen que deseas cargar
-    .on("mouseover", function(d) {
-        var stationId = d.stationId; // Obtener el station_id desde los datos
-        var formattedId = formatStationId(stationId);
-        
-        // Mostrar el tooltip
-        d3.select(this)
-        .transition()
-        .attr("width", 30) // Cambiar el ancho al pasar el mouse
-        .attr("height", 30); // Cambiar la altura al pasar el mouse
+        // Crear un objeto para mapear AQI a colores
+        var aqiColorScale = d3.scaleOrdinal()
+            .domain([1, 2, 3, 4, 5, 6])
+            .range(["rgb(0, 128, 0)", "rgb(238, 176, 9)", "rgb(250, 145, 74)", 
+                    "rgb(255, 0, 0)", "rgb(128, 0, 128)", "rgb(165, 42, 42)"]);
 
-        d3.select("#tooltip")
-            .style("left", (d3.event.pageX + 10) + "px")
-            .style("top", (d3.event.pageY - 20) + "px")
-            .style("opacity", 0.9)
-            .html("Estación de AQ: " + formattedId);
-    })
-    .on("mouseout", function() {
-        // Ocultar el tooltip al quitar el mouse
-        d3.select("#tooltip").style("opacity", 0);
-        d3.select(this)
-            .transition()
-            .attr("width", 20) // Restaurar el ancho al quitar el mouse
-            .attr("height", 20);
-    })       
-     
-    .on("click", function(d) {
-        var stationId = d.stationId;
-        console.log("Haz clic en la imagen de la estación AQI:", stationId);
-        updateChartsForStation(stationId); // Actualizar gráficos con la nueva estación
+        // Actualizar los círculos en el mapa con los nuevos datos de AQI
+        g.selectAll(".station-circle")
+            .data(stationData)
+            .join("circle")
+            .attr("class", "station-circle")
+            .attr("cx", function(d) {
+                return projection([+d.longitude, +d.latitude])[0]; // Coordenada x del centro del círculo
+            })
+            .attr("cy", function(d) {
+                return projection([+d.longitude, +d.latitude])[1]; // Coordenada y del centro del círculo
+            })
+            .attr("r", 5) // Radio inicial del círculo
+            .style("fill", function(d) {
+                // Obtener AQI para esta estación en la fecha seleccionada
+                var aqiValue = filteredData.find(function(aqi) {
+                    return aqi.stationId === d.stationId;
+                }).AQI_general;
+                // Devolver el color correspondiente según el AQI
+                return aqiColorScale(aqiValue);
+            })
+            .style("opacity", 0.8) // Opacidad del círculo
+            .on("mouseover", function() {
+                d3.select(this)
+                    .transition()
+                    .duration(200) // Duración de la transición en milisegundos
+                    .attr("r", 7); // Nuevo radio al pasar el mouse sobre el círculo
+            })
+            .on("mouseout", function() {
+                d3.select(this)
+                    .transition()
+                    .duration(200) // Duración de la transición en milisegundos
+                    .attr("r", 5); // Restaurar el radio original al quitar el mouse del círculo
+            })
+            .on("click", function(d) {
+                var stationId = d.stationId;
+                console.log("Haz clic en la estación AQI:", stationId);
+                updateChartsForStation(stationId); // Actualizar gráficos con la nueva estación
+            });
+
+    }).catch(function(error) {
+        console.log("Error al cargar los datos de AQI CSV:", error); // Manejar errores de carga de datos de AQI
     });
-    
-}).catch(function(error) {
-    console.log("Error al cargar los datos CSV:", error); // Manejar errores de carga de datos
-});
+}
 
+// Función para obtener una fecha aleatoria dentro del rango disponible en el dataset
+function getRandomDate(data) {
+    var dates = data.map(function(d) { return d.date; });
+    var randomDate = dates[Math.floor(Math.random() * dates.length)];
+    return randomDate;
+}
+
+// Cargar los datos de latitud y longitud de las estaciones de AQ
+d3.csv("data/lat_lon_beijijng_aq.csv").then(function(stationData) {
+    // Verificar que los datos se están cargando correctamente
+    console.log("Datos de estaciones cargados:", stationData);
+
+    // Cargar los datos de AQI general por día
+    d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
+        // Obtener una fecha aleatoria del dataset de AQI al inicio
+        var randomDate = getRandomDate(aqiData);
+        console.log("Fecha aleatoria inicial seleccionada:", randomDate);
+
+        // Llamar a la función para actualizar los círculos con la fecha aleatoria inicial
+        updateMapWithDate(randomDate, stationData);
+
+        // Configuración del datepicker
+        $("#datepicker").datepicker({
+            dateFormat: "yy-mm-dd",
+            minDate: new Date("2017-01-01"),
+            maxDate: new Date("2018-01-31"),
+            onSelect: function(date) {
+                console.log("Fecha seleccionada:", date);
+                // Llamar a la función para actualizar los círculos con la nueva fecha seleccionada
+                updateMapWithDate(date, stationData);
+            }
+        });
+
+        // Agregar los círculos al mapa inicialmente con la fecha aleatoria inicial
+        var width = 600; // Ajusta según el tamaño deseado
+        var height = 400; // Ajusta según el tamaño deseado
+
+        var projection = d3.geoMercator()
+            .center([116.3975, 39.9085])
+            .scale(100000)
+            .translate([width / 2, height / 2]);
+
+        var svg = d3.select("#map")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        var g = svg.append("g");
+
+    }).catch(function(error) {
+        console.log("Error al cargar los datos de AQI CSV:", error); // Manejar errores de carga de datos de AQI
+    });
+
+}).catch(function(error) {
+    console.log("Error al cargar los datos de estaciones CSV:", error); // Manejar errores de carga de datos de estaciones
+});
 
 // Cargar los datos de latitud y longitud de las estaciones de ME0
 d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
