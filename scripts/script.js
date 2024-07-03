@@ -27,10 +27,70 @@ function formatStationId(stationId) {
 
     return formattedId;
 }
-
 /////////////////// 
 //VISUALIZACION DE MI SERIE TEMPORAL DE CONTAMINACION, Y SERIE TEMPORAL POR HORA
 ///////////////////
+function drawAndUpdateChartsPollutionForHour(date, stationId, variable) {
+    // Limpiar el contenedor antes de dibujar el nuevo gráfico
+    d3.select("#chart-hour-pollution").selectAll("*").remove();
+
+    // Crear el nuevo SVG para el gráfico por hora
+    var svg = d3.select("#chart-hour-pollution").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Filtrar los datos por la fecha y la estación
+    d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
+        var parseDateTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+
+        // Filtrar datos para la estación seleccionada y la fecha seleccionada
+        hourlyData = hourlyData.filter(function(d) {
+            return d.stationId === stationId && formatDate(parseDateTime(d.date + " " + d.time)) === formatDate(date);
+        });
+
+        hourlyData.forEach(function(d) {
+            d.date = parseDateTime(d.date + " " + d.time);
+            d[variable] = +d[variable];
+        });
+
+        // Escala temporal para el gráfico por hora
+        var xHour = d3.scaleTime()
+            .range([0, width])
+            .domain(d3.extent(hourlyData, function(d) { return d.date; })).nice();
+
+        // Escala lineal para el eje Y
+        var yHour = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, d3.max(hourlyData, function(d) { return d[variable]; })]).nice();
+
+        // Línea de la serie temporal por hora
+        var line = d3.line()
+            .x(function(d) { return xHour(d.date); })
+            .y(function(d) { return yHour(d[variable]); });
+
+        // Añadir la línea al gráfico
+        svg.append("path")
+            .datum(hourlyData)
+            .attr("class", "line")
+            .attr("d", line)
+            .style("fill", "none")
+            .style("stroke", "steelblue")
+            .style("stroke-width", 1.5);
+
+        // Ejes
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xHour).tickFormat(d3.timeFormat("%H:%M")));
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(d3.axisLeft(yHour).ticks(7));
+    });
+}
+
 
 function drawChart(variable, containerId, stationId) {
     var svg = d3.select("#" + containerId).append("svg")
@@ -96,7 +156,7 @@ function drawChart(variable, containerId, stationId) {
             console.log("Station ID:", stationId); // Imprimir el stationId en la consola
             
             // Llamar a la función para dibujar el gráfico por hora
-            updateHourlyChartForStation(selectedRange,stationId);
+            updateHourlyChartForStation(selectedRange, stationId);
             
         }
 
@@ -109,6 +169,7 @@ function drawChart(variable, containerId, stationId) {
             .attr("cx", function(d) { return x(d.date); })
             .attr("cy", function(d) { return y(d[variable]); })
             .style("fill", function(d) { return color(d[variable]); })
+
             .on("click", function(d) {
                 var clickedCircle = d3.select(this);
                 var isEnlarged = clickedCircle.attr("r") == 15;
@@ -118,8 +179,9 @@ function drawChart(variable, containerId, stationId) {
                 d3.select("#popup-chart-container").style("display", "block");
 
                 // Crear el gráfico emergente
-                drawHourlyChart(variable, "popup-chart-container", stationId, d.date);
+                // drawHourlyChart(variable, "popup-chart-container", stationId, d.date);
                 updateOtherCharsMeteorogical(d.date);
+                drawAndUpdateChartsPollutionForHour(d.date, d.stationId, variable);
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
                     .attr("r", 3)
@@ -211,9 +273,10 @@ function drawChart(variable, containerId, stationId) {
                 .call(d3.axisLeft(yHour).ticks(7));
         });
     }
-    
-    
 }
+
+
+
 // Función para dibujar el gráfico por hora en otro contenedor
 function drawHourlyChart(selectedRange,stationId) {
     d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
