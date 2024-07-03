@@ -47,10 +47,10 @@ function drawChart(variable, containerId, stationId) {
         .text(variable);
     
     var data; // Variable global para almacenar los datos
+    var stationId = "yufa_aq"; // Por ejemplo, asegúrate de definirlo adecuadamente
 
     d3.csv("data/real-daily_aqi_output.csv").then(function(csvData) {
         data = csvData; // Asignar los datos cargados a la variable global
-        var stationId = "yufa_aq"; // Por ejemplo, asegúrate de definirlo adecuadamente
 
         data = data.filter(function(d) {
             return d.stationId === "yufa_aq";
@@ -96,10 +96,9 @@ function drawChart(variable, containerId, stationId) {
             console.log("Station ID:", stationId); // Imprimir el stationId en la consola
             
             // Llamar a la función para dibujar el gráfico por hora
-            drawHourlyChart(selectedRange);
+            updateHourlyChartForStation(selectedRange,stationId);
+            
         }
-            
-            
 
         svg.selectAll(".dot")
             .data(data)
@@ -149,10 +148,10 @@ function drawChart(variable, containerId, stationId) {
     });
     
     // Función para dibujar el gráfico por hora en otro contenedor
-    function drawHourlyChart(selectedRange) {
+    function drawHourlyChart(selectedRange,stationId) {
         d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
             hourlyData = hourlyData.filter(function(d) {
-                return d.stationId === "yufa_aq";
+                return d.stationId === stationId;
             });
 
             var parseDateTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
@@ -211,13 +210,76 @@ function drawChart(variable, containerId, stationId) {
                 .call(d3.axisLeft(yHour).ticks(7));
         });
     }
+
+    function updateHourlyChartForStation(selectedRange, stationId) {
+        d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
+            // Filtrar datos para la estación seleccionada
+            hourlyData = hourlyData.filter(function(d) {
+                return d.stationId === stationId;
+            });
+    
+            var parseDateTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+            hourlyData.forEach(function(d) {
+                d.date = parseDateTime(d.date + " " + d.time);
+                d[variable] = +d[variable];
+            });
+    
+            // Filtrar los datos por el rango de fechas seleccionado
+            var filteredData = hourlyData.filter(function(d) {
+                return d.date >= selectedRange[0] && d.date <= selectedRange[1];
+            });
+    
+            // Limpiar el contenedor antes de dibujar el nuevo gráfico
+            d3.select("#chart-hour-pollution").selectAll("*").remove();
+    
+            // Crear el nuevo SVG para el gráfico por hora
+            var svg = d3.select("#chart-hour-pollution").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    
+            // Escala temporal para el gráfico por hora
+            var xHour = d3.scaleTime()
+                .range([0, width])
+                .domain(d3.extent(filteredData, function(d) { return d.date; })).nice();
+    
+            // Escala lineal para el eje Y
+            var yHour = d3.scaleLinear()
+                .range([height, 0])
+                .domain([0, d3.max(filteredData, function(d) { return d[variable]; })]).nice();
+    
+            // Línea de la serie temporal por hora
+            var line = d3.line()
+                .x(function(d) { return xHour(d.date); })
+                .y(function(d) { return yHour(d[variable]); });
+    
+            // Añadir la línea al gráfico
+            svg.append("path")
+                .datum(filteredData)
+                .attr("class", "line")
+                .attr("d", line)
+                .style("fill", "none")
+                .style("stroke", "steelblue")
+                .style("stroke-width", 1.5);
+    
+            // Ejes
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(xHour).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")));
+    
+            svg.append("g")
+                .attr("class", "y axis")
+                .call(d3.axisLeft(yHour).ticks(7));
+        });
+    }
+    
     
 }
 
-function updatedrawHourlyChart(stationId) {
 
-    
-}
+
 function updateChartsForStation(stationId) {
     variables.forEach(function(variable) {
         var svg = d3.select("#chart-" + variable).select("svg").select("g");
@@ -595,44 +657,42 @@ function updateWeatherChartForStation(stationId) {
 }
 
 
-
 //=======================================================================================================
-//VIZUALIZACION DE MAPA
+// VIZUALIZACION DE MAPA
 //
-// Create an SVG element to contain the map
-// Define the dimensions of the map
+// Define las dimensiones del mapa
 const width_MAP = 800;
 const height_MAP = 1100;
 
-// Create an SVG element to contain the map
+// Crea un elemento SVG para contener el mapa
 const svg = d3.select("#map").append("svg")
     .attr("width", width_MAP)
     .attr("height", height_MAP);
 
-// Create a group element for the map
+// Crea un elemento 'g' para el mapa
 const g = svg.append("g");
 
-// Define a zoom behavior
+// Define el comportamiento de zoom
 const zoom = d3.zoom().on("zoom", (event) => {
     g.attr("transform", event.transform);
 });
 
-// Apply the zoom behavior to the SVG element
+// Aplica el comportamiento de zoom al elemento SVG
 svg.call(zoom);
 
-// Define a projection to convert GeoJSON coordinates to screen coordinates
+// Define la proyección para convertir coordenadas GeoJSON a coordenadas de pantalla
 const projection = d3.geoMercator()
-    .center([116.4074, 39.9042]) // Center the map on Beijing
-    .scale(15000) // Adjust the scale to fit the map size
-    .translate([width_MAP / 2.5, height_MAP / 2.5]);
+    .center([116.4074, 39.9042]) // Centra el mapa en Beijing
+    .scale(10000) // Ajusta la escala para que quepa en el tamaño del mapa
+    .translate([width_MAP / 3.5, height_MAP / 4]);
 
-// Define a path generator to convert GeoJSON paths to SVG paths
+// Define el generador de ruta para convertir rutas GeoJSON a rutas SVG
 const path = d3.geoPath().projection(projection);
 
-// Load the GeoJSON data
+// Carga los datos GeoJSON
 d3.json("map/beijing.json")
     .then(data => {
-        // Bind data and create one path per GeoJSON feature
+        // Enlaza los datos y crea un path por cada entidad GeoJSON
         g.selectAll("path")
             .data(data.features)
             .enter().append("path")
@@ -651,75 +711,84 @@ d3.json("map/beijing.json")
                     .attr("stroke-width", 1);
             });
     })
-    .catch(error => console.error('Error loading or parsing data:', error));
-// Función para cargar los datos y actualizar los puntos en el mapa según la fecha seleccionada
+    .catch(error => console.error('Error cargando o parseando los datos:', error));
+
+
+// Función para cargar los datos y actualizar las formas en el mapa según la fecha seleccionada
 function updateMapWithDate(selectedDate, stationData) {
-    // Cargar los datos de AQI general por día
+    // Carga los datos de AQI general por día
     d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
-        // Filtrar los datos de AQI para la fecha seleccionada
+        // Filtra los datos de AQI para la fecha seleccionada
         var filteredData = aqiData.filter(function(d) {
             return d.date === selectedDate;
         });
 
-        // Crear un objeto para mapear AQI a colores
+        // Crea un objeto para mapear AQI a colores
         var aqiColorScale = d3.scaleOrdinal()
             .domain([1, 2, 3, 4, 5, 6])
             .range(["rgb(0, 128, 0)", "rgb(238, 176, 9)", "rgb(250, 145, 74)", 
                     "rgb(255, 0, 0)", "rgb(128, 0, 128)", "rgb(165, 42, 42)"]);
 
-        // Actualizar los círculos en el mapa con los nuevos datos de AQI
-        g.selectAll(".station-circle")
+        // Actualiza las formas en el mapa con los nuevos datos de AQI
+        g.selectAll(".station-shape")
             .data(stationData)
-            .join("circle")
-            .attr("class", "station-circle")
-            .attr("cx", function(d) {
-                return projection([+d.longitude, +d.latitude])[0]; // Coordenada x del centro del círculo
+            .join("path")
+            .attr("class", "station-shape")
+            .attr("transform", function(d) {
+                return `translate(${projection([+d.longitude, +d.latitude])})`; // Transforma según la proyección
             })
-            .attr("cy", function(d) {
-                return projection([+d.longitude, +d.latitude])[1]; // Coordenada y del centro del círculo
+            .attr("d", function(d) {
+                // Define diferentes formas según la nota
+                switch (d.Notes) {
+                    case "Urban":
+                        return d3.symbol().type(d3.symbolSquare)();
+                    case "Cross Reference":
+                        return d3.symbol().type(d3.symbolDiamond)();
+                    case "Rural":
+                        return d3.symbol().type(d3.symbolCircle)();
+                    case "Traffic":
+                        return d3.symbol().type(d3.symbolTriangle)();
+                    default:
+                        return d3.symbol().type(d3.symbolStar)();
+                }
             })
-            .attr("r", 5) // Radio inicial del círculo
-            .style("fill", function(d) {
-                // Obtener AQI para esta estación en la fecha seleccionada
+            .attr("fill", function(d) {
+                // Obtén el AQI para esta estación en la fecha seleccionada
                 var aqiValue = filteredData.find(function(aqi) {
                     return aqi.stationId === d.stationId;
                 }).AQI_general;
-                // Devolver el color correspondiente según el AQI
+                // Devuelve el color correspondiente según el AQI
                 return aqiColorScale(aqiValue);
             })
-            .style("opacity", 0.8) // Opacidad del círculo
+            .attr("stroke", "#000")
+            .attr("stroke-width", 1)
+            .style("opacity", 0.8)
             .on("mouseover", function(d) {
-                var stationId = d.stationId; // Obtener el station_id desde los datos
+                var stationId = d.stationId; // Obtén el station_id desde los datos
                 var formattedId = formatStationId(stationId);
                 
-                // Mostrar el tooltip
-                d3.select(this)
-                .transition()
-                .attr("width", 30) // Cambiar el ancho al pasar el mouse
-                .attr("height", 30); // Cambiar la altura al pasar el mouse
-        
+                // Muestra el tooltip
                 d3.select("#tooltip")
                     .style("left", (d3.event.pageX + 10) + "px")
                     .style("top", (d3.event.pageY - 20) + "px")
                     .style("opacity", 0.9)
-                    .html("Estación de AQ: " + formattedId);
+                    .html("Estación de AQ: " + formattedId + "<br/>" +"Area: "+ d.Notes+"<br/>" +
+                        "AQI: " + filteredData.find(function(aqi) {
+                            return aqi.stationId === stationId;
+                        }).AQI_general);
             })
             .on("mouseout", function() {
-                // Ocultar el tooltip al quitar el mouse
+                // Oculta el tooltip al quitar el mouse
                 d3.select("#tooltip").style("opacity", 0);
-                d3.select(this)
-                    .transition()
-                    .attr("width", 20) // Restaurar el ancho al quitar el mouse
-                    .attr("height", 20);
             })     
             .on("click", function(d) {
                 var stationId = d.stationId;
                 console.log("Haz clic en la estación AQI:", stationId);
-                updateChartsForStation(stationId); // Actualizar gráficos con la nueva estación
+                updateChartsForStation(stationId); // Actualiza gráficos con la nueva estación
             });
 
     }).catch(function(error) {
-        console.log("Error al cargar los datos de AQI CSV:", error); // Manejar errores de carga de datos de AQI
+        console.log("Error al cargar los datos de AQI CSV:", error); // Maneja errores de carga de datos de AQI
     });
 }
 
@@ -730,18 +799,18 @@ function getRandomDate(data) {
     return randomDate;
 }
 
-// Cargar los datos de latitud y longitud de las estaciones de AQ
+// Carga los datos de latitud y longitud de las estaciones de AQ
 d3.csv("data/lat_lon_beijijng_aq.csv").then(function(stationData) {
-    // Verificar que los datos se están cargando correctamente
+    // Verifica que los datos se están cargando correctamente
     console.log("Datos de estaciones cargados:", stationData);
 
-    // Cargar los datos de AQI general por día
+    // Carga los datos de AQI general por día
     d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
-        // Obtener una fecha aleatoria del dataset de AQI al inicio
+        // Obtiene una fecha aleatoria del dataset de AQI al inicio
         var randomDate = getRandomDate(aqiData);
         console.log("Fecha aleatoria inicial seleccionada:", randomDate);
 
-        // Llamar a la función para actualizar los círculos con la fecha aleatoria inicial
+        // Llama a la función para actualizar las formas con la fecha aleatoria inicial
         updateMapWithDate(randomDate, stationData);
 
         // Configuración del datepicker
@@ -751,33 +820,17 @@ d3.csv("data/lat_lon_beijijng_aq.csv").then(function(stationData) {
             maxDate: new Date("2018-01-31"),
             onSelect: function(date) {
                 console.log("Fecha seleccionada:", date);
-                // Llamar a la función para actualizar los círculos con la nueva fecha seleccionada
+                // Llama a la función para actualizar las formas con la nueva fecha seleccionada
                 updateMapWithDate(date, stationData);
             }
         });
 
-        // Agregar los círculos al mapa inicialmente con la fecha aleatoria inicial
-        var width = 600; // Ajusta según el tamaño deseado
-        var height = 400; // Ajusta según el tamaño deseado
-
-        var projection = d3.geoMercator()
-            .center([116.3975, 39.9085])
-            .scale(100000)
-            .translate([width / 2, height / 2]);
-
-        var svg = d3.select("#map")
-            .append("svg")
-            .attr("width", width)
-            .attr("height", height);
-
-        var g = svg.append("g");
-
     }).catch(function(error) {
-        console.log("Error al cargar los datos de AQI CSV:", error); // Manejar errores de carga de datos de AQI
+        console.log("Error al cargar los datos de AQI CSV:", error); // Maneja errores de carga de datos de AQI
     });
 
 }).catch(function(error) {
-    console.log("Error al cargar los datos de estaciones CSV:", error); // Manejar errores de carga de datos de estaciones
+    console.log("Error al cargar los datos de estaciones CSV:", error); // Maneja errores de carga de datos de estaciones
 });
 
 // Cargar los datos de latitud y longitud de las estaciones de ME0

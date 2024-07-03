@@ -6,7 +6,13 @@
     <title>Visualización de Contaminantes y Datos Meteorológicos de Beijing</title>
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
         .quadrant-container {
             display: grid;
             grid-template-columns: 1fr; /* Una columna */
@@ -16,18 +22,17 @@
             grid-gap: 20px;
             float: left;
         }
-        .chart-container {
+        .chart-container, .chart-container-map {
             border: 1px solid #ccc;
             padding: 10px;
             overflow: auto;  
-            
+            position: relative; /* Para posicionar el título */
         }
         .chart {
             top: 500px;
             margin-bottom: -50px;
             margin-top: 20px;
             margin-left: 0px;
-
         }
         
         .chart-pollution {
@@ -35,24 +40,41 @@
             margin-bottom: -30px;
             margin-top: -35px;
             margin-left: 0px;
-
         }
         #pollutants-container {
             width: 920px;
-            height: 400px;
+            height: 220px;
             top: 10px;
             left: 40px;
         }
         #weather-container {
             width: 920px;
             top: 450px;
-            height: 400px;
-            left: -924px;
+            height: 220px;
+            left: -921px;
         }
         #chart-hour-pollution{
-            width: 811px;
+            width: 920px;
+            height: 155px;
+            top: 20px;
+            left: 40px;
+        }
+        #chart-hour-meteorological{
+            width: 920px;
             height: 160px;
-            top: -410px;
+            top: 285px;
+            left: 40px;
+        }
+        #chart-hour-correlation{
+            width: 420px;
+            height: 420px;
+            top: -1000px;
+            left: 1000px;
+        }
+        #chart-hour-compare{
+            width: 872px;
+            height: 390px;
+            top: -130px;
             left: 1000px;
         }
         #map-container {
@@ -60,17 +82,37 @@
             padding: 10px;
             overflow: hidden; /* Evita el scroll */
             position: absolute;
-            width: 660px;
-            top: 218px;
-            height: 637px;
-            left: 1010px;
-            
+            width: 420px;
+            top: 15px;
+            height: 420px;
+            left: 1450px;
         }
         #date-selector {
             position: absolute;
-            top: 20px;
+            top: 40px;
+            background-color: #88a494; /* Fondo del título */
             right: 20px;
+            color: #ffffff;
             z-index: 1000; /* Asegura que esté encima del mapa */
+        }
+        #datepicker {
+            border: 1px solid #88a494;
+            padding: 5px;
+            color: #131313;
+        }
+        .title {
+            background-color: #88a494; /* Fondo del título */
+            color: #ffffff;
+            padding: 5px;
+            position: absolute;
+            top: 00;
+            left: 0;
+            right: 0;
+            text-align: left;
+            z-index: 1; /* Asegura que el título esté por encima del contenido */
+        }
+        .content {
+            margin-top: 50px; /* Deja espacio para el título */
         }
     </style>
 </head>
@@ -79,44 +121,72 @@
     <div class="grid-container">
         <!-- Contenedor de Gráficas de Contaminantes -->
         <div id="pollutants-container" class="chart-container">
-            <div id="legend-container"></div>
-            <div id="chart-PM2_5" class="chart-pollution"></div>
-            <div id="chart-PM10" class="chart-pollution"></div>
-            <div id="chart-SO2" class="chart-pollution"></div>
-            <div id="chart-NO2" class="chart-pollution"></div>
-            <div id="chart-CO" class="chart-pollution"></div>
-            <div id="chart-O3" class="chart-pollution"></div>
+            <div class="title"> <img src="img/logo-cont.png" width="24px" height="15px" alt="Leyenda"  id="legend-container"> Gráficas de Contaminantes</div>
+
+            <div class="content">
+                <div id="legend-container"></div>
+                <div id="chart-PM2_5" class="chart-pollution"></div>
+                <div id="chart-PM10" class="chart-pollution"></div>
+                <div id="chart-SO2" class="chart-pollution"></div>
+                <div id="chart-NO2" class="chart-pollution"></div>
+                <div id="chart-CO" class="chart-pollution"></div>
+                <div id="chart-O3" class="chart-pollution"></div>
+            </div>
         </div>
 
         <!-- Contenedor de Gráficas Meteorológicas -->
         <div id="weather-container" class="chart-container">
-            <div id="chart-temperature" class="chart"></div>
-            <div id="chart-pressure" class="chart"></div>
-            <div id="chart-humidity" class="chart"></div>
-            <!-- <div id="chart-wind_direction" class="chart"></div> -->
-            <div id="chart-wind_speed" class="chart"></div>
-            <!-- <div id="chart-weather" class="chart"></div> -->
+            <div class="title"> <img src="img/logo-met.png" width="24px" height="15px" alt="Leyenda"  id="legend-container"> Gráficas Meteorológicas</div>
+            <div class="content">
+                <div id="chart-temperature" class="chart"></div>
+                <div id="chart-pressure" class="chart"></div>
+                <div id="chart-humidity" class="chart"></div>
+                <!-- <div id="chart-wind_speed" class="chart"></div> -->
+            </div>
         </div>
     </div>
 
-<!-- Contenedor del Mapa -->
-<div id="map-container" class="chart-container-map">
-    <div id="date-selector">
-        <label for="datepicker">Selecciona una fecha:</label>
-        <input type="text" id="datepicker">
+    <!-- Contenedor del Mapa -->
+    <div id="map-container" class="chart-container-map">
+        <div class="title"> <img src="img/logo-map.png" width="24px" height="15px" alt="Leyenda"  id="legend-container"> Mapa de Beijing</div>
+        <div class="content">
+            <div id="date-selector">
+                <label for="datepicker">Selecciona una fecha:</label>
+                <input type="text" id="datepicker">
+            </div>
+            <div id="map"></div>
+        </div>
     </div>
-    <div id="map"></div>
-</div>
-
-    
-    <!-- Selector de Fecha -->
-
     
     <!-- Visor por hora de los contaminantes -->
     <div id="chart-hour-pollution" class="chart-container">
-        <div id="chart-for-hour" class="chart-for-hour"> </div>
+        <div class="title"> <img src="img/logo-serie-hour.png" width="24px" height="15px" alt="Leyenda"  id="legend-container"> Visor por Hora de Contaminantes</div>
+        <div class="content">
+            <div id="chart-for-hour" class="chart-for-hour"></div>
+        </div>
     </div>
-    
+    <!-- Visor por hora de datos meteorologicos -->
+    <div id="chart-hour-meteorological" class="chart-container">
+        <div class="title"> <img src="img/logo-serie-hour.png" width="24px" height="15px" alt="Leyenda"  id="legend-container"> Visor por Hora de Meteorologia</div>
+        <div class="content">
+            <div id="chart-for-hour" class="chart-for-hour"></div>
+        </div>
+    </div>
+    <!-- Visor de comparacion de contaminantes -->
+    <div id="chart-hour-compare" class="chart-container">
+        <div class="title"> <img src="img/logo-serie-hour.png" width="24px" height="15px" alt="Leyenda"  id="legend-container">Compracion de contaminantes</div>
+        <div class="content">
+            <div id="chart-for-hour" class="chart-for-hour"></div>
+        </div>
+    </div>
+    <!-- Visor de correlacion de contamiantnes y meteorologicos -->
+    <div id="chart-hour-correlation" class="chart-container">
+        <div class="title"> <img src="img/logo-corr.png" width="24px" height="15px" alt="Leyenda"  id="legend-container">Correlacion de contaminantes y datos meteorologicos</div>
+        <div class="content">
+            <div id="chart-for-hour" class="chart-for-hour"></div>
+        </div>
+    </div>
+        
     <div id="tooltip" class="tooltip"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -131,7 +201,6 @@
             });
 
             // Configuración del datepicker
-
         });
     </script>
 </body>
