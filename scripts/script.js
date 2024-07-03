@@ -119,6 +119,7 @@ function drawChart(variable, containerId, stationId) {
 
                 // Crear el gráfico emergente
                 drawHourlyChart(variable, "popup-chart-container", stationId, d.date);
+                updateOtherCharsMeteorogical(d.date);
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
                     .attr("r", 3)
@@ -147,70 +148,6 @@ function drawChart(variable, containerId, stationId) {
             });
     });
     
-    // Función para dibujar el gráfico por hora en otro contenedor
-    function drawHourlyChart(selectedRange,stationId) {
-        d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
-            hourlyData = hourlyData.filter(function(d) {
-                return d.stationId === stationId;
-            });
-
-            var parseDateTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
-            hourlyData.forEach(function(d) {
-                d.date = parseDateTime(d.date + " " + d.time);
-                d[variable] = +d[variable];
-            });
-
-            // Filtrar los datos por el rango de fechas seleccionado
-            var filteredData = hourlyData.filter(function(d) {
-                return d.date >= selectedRange[0] && d.date <= selectedRange[1];
-            });
-
-            // Limpiar el contenedor antes de dibujar
-            d3.select("#chart-hour-pollution").selectAll("*").remove();
-
-            // Crear el nuevo SVG para el gráfico por hora
-            var svg = d3.select("#chart-hour-pollution").append("svg")
-                .attr("width", width + margin.left + margin.right)
-                .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-            // Escala temporal para el gráfico por hora
-            var xHour = d3.scaleTime()
-                .range([0, width])
-                .domain(d3.extent(filteredData, function(d) { return d.date; })).nice();
-
-            // Recalcular la escala Y
-            var yHour = d3.scaleLinear()
-                .range([height, 0])
-                .domain([0, d3.max(filteredData, function(d) { return d[variable]; })]).nice();
-
-            // Línea de la serie temporal
-            var line = d3.line()
-                .x(function(d) { return xHour(d.date); })
-                .y(function(d) { return yHour(d[variable]); });
-
-            // Añadir la línea al gráfico
-            svg.append("path")
-                .datum(filteredData)
-                .attr("class", "line")
-                .attr("d", line)
-                .style("fill", "none")
-                .style("stroke", "steelblue")
-                .style("stroke-width", 1.5);
-
-            // Ejes
-            svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(d3.axisBottom(xHour).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")));
-
-            svg.append("g")
-                .attr("class", "y axis")
-                .call(d3.axisLeft(yHour).ticks(7));
-        });
-    }
-
     function updateHourlyChartForStation(selectedRange, stationId) {
         d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
             // Filtrar datos para la estación seleccionada
@@ -277,8 +214,69 @@ function drawChart(variable, containerId, stationId) {
     
     
 }
+// Función para dibujar el gráfico por hora en otro contenedor
+function drawHourlyChart(selectedRange,stationId) {
+    d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
+        hourlyData = hourlyData.filter(function(d) {
+            return d.stationId === stationId;
+        });
 
+        var parseDateTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+        hourlyData.forEach(function(d) {
+            d.date = parseDateTime(d.date + " " + d.time);
+            d[variable] = +d[variable];
+        });
 
+        // Filtrar los datos por el rango de fechas seleccionado
+        var filteredData = hourlyData.filter(function(d) {
+            return d.date >= selectedRange[0] && d.date <= selectedRange[1];
+        });
+
+        // Limpiar el contenedor antes de dibujar
+        d3.select("#chart-hour-pollution").selectAll("*").remove();
+
+        // Crear el nuevo SVG para el gráfico por hora
+        var svg = d3.select("#chart-hour-pollution").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // Escala temporal para el gráfico por hora
+        var xHour = d3.scaleTime()
+            .range([0, width])
+            .domain(d3.extent(filteredData, function(d) { return d.date; })).nice();
+
+        // Recalcular la escala Y
+        var yHour = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, d3.max(filteredData, function(d) { return d[variable]; })]).nice();
+
+        // Línea de la serie temporal
+        var line = d3.line()
+            .x(function(d) { return xHour(d.date); })
+            .y(function(d) { return yHour(d[variable]); });
+
+        // Añadir la línea al gráfico
+        svg.append("path")
+            .datum(filteredData)
+            .attr("class", "line")
+            .attr("d", line)
+            .style("fill", "none")
+            .style("stroke", "steelblue")
+            .style("stroke-width", 1.5);
+
+        // Ejes
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xHour).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")));
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(d3.axisLeft(yHour).ticks(7));
+    });
+}
 
 function updateChartsForStation(stationId) {
     variables.forEach(function(variable) {
@@ -382,7 +380,7 @@ function UpdateChart(variable, containerId, stationId) {
             .on("click", function(d) {
                 var clickedCircle = d3.select(this);
                 var isEnlarged = clickedCircle.attr("r") == 15;
-            
+                updateOtherCharsMeteorogical(d.date);
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
                     .attr("r", 3)
@@ -475,6 +473,7 @@ function updateOtherCharts(date) {
     console.log("Actualizar otras gráficas para la fecha: " + formatDate(date));
 }
 
+
 //=======================================================================================================
 //VIZUALIZACION DE METOROLOGIA
 //
@@ -483,12 +482,73 @@ weatherAttributes.forEach(function(attribute) {
     drawWeatherChart(attribute, "chart-" + attribute);
 });
 
+function updateOtherCharsMeteorogical(date) {
+    // Vuelve al tamaño original todos los puntos de todas las gráficas y elimina el borde amarillo
+    d3.selectAll(".dot")
+        .attr("r", 3) // Vuelve al tamaño original
+        .style("stroke", null); // Elimina el borde amarillo
+
+    // Remueve cualquier línea vertical previamente agregada
+    d3.selectAll(".highlight-line").remove();
+
+    // Selecciona todos los puntos con la misma fecha en todas las gráficas y los resalta
+    d3.selectAll(".dot")
+        .filter(function(d) { return d.date.getTime() === date.getTime(); })
+        .attr("r", 15) // Amplía el punto
+        .style("stroke", "yellow"); // Agrega un borde amarillo
+
+    // Añade una línea vertical en la fecha seleccionada para identificarla visualmente en los gráficos meteorológicos
+    d3.selectAll(".chart").each(function() {
+        var svg = d3.select(this).select("svg").select("g");
+        var data = svg.selectAll(".dot").data();
+        var selectedData = data.filter(function(d) { return d.date.getTime() === date.getTime(); });
+
+        if (selectedData.length > 0) {
+            var cx = x(date);
+
+            // Agregar la línea vertical
+            svg.append("line")
+                .attr("class", "highlight-line")
+                .attr("x1", cx)
+                .attr("y1", 0)
+                .attr("x2", cx)
+                .attr("y2", height)
+                .style("stroke", "red")
+                .style("stroke-width", 2);
+
+            // Agregar el evento de mouseover
+            svg.append("rect")
+                .attr("class", "highlight-line")
+                .attr("x", cx - 5)
+                .attr("y", 0)
+                .attr("width", 10)
+                .attr("height", height)
+                .style("opacity", 0)
+                .on("mouseover", function(d) {
+                    var tooltip = d3.select("#tooltip")
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 20) + "px")
+                        .style("opacity", 0.9);
+                    tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
+                        "Valor de " + attribute + ": " + d[attribute]);
+                })
+                .on("mouseout", function(d) {
+                    d3.select("#tooltip").style("opacity", 0);
+                });
+        }
+    });
+
+    console.log("Actualizar otras gráficas para la fecha: " + formatDate(date));
+}
+
 function drawWeatherChart(attribute, containerId) {
     // Limpiar el contenedor antes de dibujar el nuevo gráfico
     d3.select("#" + containerId).select("svg").remove();
 
     var svg = d3.select("#" + containerId)
         .append("svg")
+        .attr("class", "weather-chart")
+        .attr("data-attribute", attribute) // Añadir atributo de datos
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -563,6 +623,7 @@ function drawWeatherChart(attribute, containerId) {
             });
     });
 }
+
 function updateWeatherChartForStation(stationId) {
     var weatherAttributes = ["temperature", "pressure", "humidity", "wind_direction", "wind_speed"];
 
