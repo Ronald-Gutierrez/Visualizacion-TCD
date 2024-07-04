@@ -156,7 +156,7 @@ function drawChart(variable, containerId, stationId) {
             console.log("Station ID:", stationId); // Imprimir el stationId en la consola
             
             // Llamar a la función para dibujar el gráfico por hora
-            updateHourlyChartForStation(selectedRange, stationId);
+            updateHourlyChartForStation(selectedRange, stationId, variable);
             
         }
 
@@ -180,7 +180,7 @@ function drawChart(variable, containerId, stationId) {
 
                 // Crear el gráfico emergente
                 // drawHourlyChart(variable, "popup-chart-container", stationId, d.date);
-                updateOtherCharsMeteorogical(d.date);
+                // updateOtherCharsMeteorogical(d.date);
                 drawAndUpdateChartsPollutionForHour(d.date, d.stationId, variable);
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
@@ -210,7 +210,7 @@ function drawChart(variable, containerId, stationId) {
             });
     });
     
-    function updateHourlyChartForStation(selectedRange, stationId) {
+    function updateHourlyChartForStation(selectedRange, stationId, variable) {
         d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
             // Filtrar datos para la estación seleccionada
             hourlyData = hourlyData.filter(function(d) {
@@ -237,7 +237,7 @@ function drawChart(variable, containerId, stationId) {
                 .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-    
+            
             // Escala temporal para el gráfico por hora
             var xHour = d3.scaleTime()
                 .range([0, width])
@@ -252,7 +252,7 @@ function drawChart(variable, containerId, stationId) {
             var line = d3.line()
                 .x(function(d) { return xHour(d.date); })
                 .y(function(d) { return yHour(d[variable]); });
-    
+
             // Añadir la línea al gráfico
             svg.append("path")
                 .datum(filteredData)
@@ -271,82 +271,19 @@ function drawChart(variable, containerId, stationId) {
             svg.append("g")
                 .attr("class", "y axis")
                 .call(d3.axisLeft(yHour).ticks(7));
+            
         });
     }
 }
 
 
 
-// Función para dibujar el gráfico por hora en otro contenedor
-function drawHourlyChart(selectedRange,stationId) {
-    d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
-        hourlyData = hourlyData.filter(function(d) {
-            return d.stationId === stationId;
-        });
-
-        var parseDateTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
-        hourlyData.forEach(function(d) {
-            d.date = parseDateTime(d.date + " " + d.time);
-            d[variable] = +d[variable];
-        });
-
-        // Filtrar los datos por el rango de fechas seleccionado
-        var filteredData = hourlyData.filter(function(d) {
-            return d.date >= selectedRange[0] && d.date <= selectedRange[1];
-        });
-
-        // Limpiar el contenedor antes de dibujar
-        d3.select("#chart-hour-pollution").selectAll("*").remove();
-
-        // Crear el nuevo SVG para el gráfico por hora
-        var svg = d3.select("#chart-hour-pollution").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        // Escala temporal para el gráfico por hora
-        var xHour = d3.scaleTime()
-            .range([0, width])
-            .domain(d3.extent(filteredData, function(d) { return d.date; })).nice();
-
-        // Recalcular la escala Y
-        var yHour = d3.scaleLinear()
-            .range([height, 0])
-            .domain([0, d3.max(filteredData, function(d) { return d[variable]; })]).nice();
-
-        // Línea de la serie temporal
-        var line = d3.line()
-            .x(function(d) { return xHour(d.date); })
-            .y(function(d) { return yHour(d[variable]); });
-
-        // Añadir la línea al gráfico
-        svg.append("path")
-            .datum(filteredData)
-            .attr("class", "line")
-            .attr("d", line)
-            .style("fill", "none")
-            .style("stroke", "steelblue")
-            .style("stroke-width", 1.5);
-
-        // Ejes
-        svg.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + height + ")")
-            .call(d3.axisBottom(xHour).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")));
-
-        svg.append("g")
-            .attr("class", "y axis")
-            .call(d3.axisLeft(yHour).ticks(7));
-    });
-}
-
 function updateChartsForStation(stationId) {
     variables.forEach(function(variable) {
         var svg = d3.select("#chart-" + variable).select("svg").select("g");
 
         // Obtener datos actualizados para la estación seleccionada
-        d3.csv("data/daily_aqi_output.csv").then(function(data) {
+        d3.csv("data/real-daily_aqi_output.csv").then(function(data) {
             data = data.filter(function(d) {
                 return d.stationId === stationId;
             });
@@ -442,8 +379,7 @@ function UpdateChart(variable, containerId, stationId) {
             .style("fill", function(d) { return color(d[variable]); })
             .on("click", function(d) {
                 var clickedCircle = d3.select(this);
-                var isEnlarged = clickedCircle.attr("r") == 15;
-                updateOtherCharsMeteorogical(d.date);
+                var isEnlarged = clickedCircle.attr("r") == 1;
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
                     .attr("r", 3)
@@ -548,8 +484,8 @@ weatherAttributes.forEach(function(attribute) {
 function updateOtherCharsMeteorogical(date) {
     // Vuelve al tamaño original todos los puntos de todas las gráficas y elimina el borde amarillo
     d3.selectAll(".dot")
-        .attr("r", 3) // Vuelve al tamaño original
-        .style("stroke", null); // Elimina el borde amarillo
+        .attr("r", 3)
+        .style("stroke", null);
 
     // Remueve cualquier línea vertical previamente agregada
     d3.selectAll(".highlight-line").remove();
@@ -557,58 +493,58 @@ function updateOtherCharsMeteorogical(date) {
     // Selecciona todos los puntos con la misma fecha en todas las gráficas y los resalta
     d3.selectAll(".dot")
         .filter(function(d) { return d.date.getTime() === date.getTime(); })
-        .attr("r", 15) // Amplía el punto
-        .style("stroke", "yellow"); // Agrega un borde amarillo
+        .attr("r", 15)
+        .style("stroke", "yellow");
 
     // Añade una línea vertical en la fecha seleccionada para identificarla visualmente en los gráficos meteorológicos
     d3.selectAll(".chart").each(function() {
         var svg = d3.select(this).select("svg").select("g");
-        var data = svg.selectAll(".dot").data();
-        var selectedData = data.filter(function(d) { return d.date.getTime() === date.getTime(); });
+        var cx = x(date);
 
-        if (selectedData.length > 0) {
-            var cx = x(date);
-
-            // Agregar la línea vertical
-            svg.append("line")
-                .attr("class", "highlight-line")
-                .attr("x1", cx)
-                .attr("y1", 0)
-                .attr("x2", cx)
-                .attr("y2", height)
-                .style("stroke", "red")
-                .style("stroke-width", 2)
-                .on("click", function() {
-                    console.log("Haz clic en la línea vertical para la fecha: " + formatDate(filteredData[0].date));
+        // Agregar la línea vertical
+        var line = svg.append("line")
+            .attr("class", "highlight-line")
+            .attr("x1", cx)
+            .attr("y1", 0)
+            .attr("x2", cx)
+            .attr("y2", height)
+            .style("stroke", "red")
+            .style("stroke-width", 2)
+            .style("stroke-dasharray", "3, 3")
+            .on("click", function() {
+                console.log("Haz clic en la línea para la fecha: " + formatDate(date) );
+            })
+            .on("mouseover", function() {
+                tooltip.style("visibility", "visible");
+            })
+            .on("mousemove", function() {
+                tooltip.style("left", (d3.event.pageX + 10) + "px")
+                       .style("top", (d3.event.pageY - 15) + "px")
+                       .html("Fecha: " + formatDate(date));
+            })
+            .on("mouseout", function() {
+                tooltip.style("visibility", "hidden");
             });
 
-// Asumiendo que `svg` está correctamente definido
-svg.append("rect")
-    .attr("class", "highlight-line")
-    .attr("x", cx - 5)
-    .attr("y", 0)
-    .attr("width", 10)
-    .attr("height", height)
-    .style("opacity", 0)
-    .on("mouseover", function(event, d) { // Usa `event` y `d` como parámetros
-        var tooltip = d3.select("#tooltip")
-            .style("left", (event.pageX + 10) + "px")
-            .style("top", (event.pageY - 20) + "px")
-            .style("opacity", 0.9);
-        tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
-            "Valor de " + attribute + ": " + d[attribute]);
-    })
-    .on("mouseout", function(event, d) { // Usa `event` y `d` como parámetros
-        d3.select("#tooltip").style("opacity", 0);
-    });
+        // Mostrar tooltip con información
+        var tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("position", "absolute")
+            .style("background-color", "rgba(0, 0, 0, 0.8)")
+            .style("color", "white")
+            .style("padding", "5px")
+            .style("border-radius", "5px")
+            .style("visibility", "hidden")
+            .html("Fecha: " + formatDate(date));
 
-        }
     });
 
     console.log("Actualizar otras gráficas para la fecha: " + formatDate(date));
 }
 
-function drawWeatherChart(attribute, containerId) {
+
+
+function drawWeatherChart(attribute, containerId,stationId) {
     // Limpiar el contenedor antes de dibujar el nuevo gráfico
     d3.select("#" + containerId).select("svg").remove();
 
@@ -685,15 +621,124 @@ function drawWeatherChart(attribute, containerId) {
                 tooltip.html("Fechas: " + formatDate(d.date) + "<br/>" +
                     "Valor de " + attribute + ": " + d[attribute]);
             })
+            .on("click", function(d) { // Agregar evento de clic
+                console.log("Estación:", d.station_id);
+                console.log("Atributo:", attribute);
+                console.log("Fecha:", d.date);
+                console.log("Valor:", d[attribute]);
+                drawHourForStationMeteorological(d.date, d.station_id, attribute);
+
+            })
             .on("mouseout", function(d) {
                 d3.select("#tooltip").style("opacity", 0);
             });
     });
 }
 
-function updateWeatherChartForStation(stationId) {
-    var weatherAttributes = ["temperature", "pressure", "humidity", "wind_direction", "wind_speed"];
+//////////////////////
 
+function drawHourForStationMeteorological(date, stationId, attribute) {
+    d3.csv("data/hour_meo_output.csv").then(function(data) {
+        // Filtrar los datos por fecha y estación
+        data = data.filter(function(d) {
+            return d.stationId === stationId && d.date === formatDate(date); // Asegúrate de tener la fecha en el formato correcto
+        });
+
+        // Parsear la hora si es necesario
+        var parseHour = d3.timeParse("%H:%M:%S");
+
+        data.forEach(function(d) {
+            d.time = parseHour(d.time); // Parsear la hora si es necesario
+            d[attribute] = +d[attribute];
+        });
+
+        // Llamar a una función para dibujar el nuevo gráfico por hora
+        drawHourChart(data, attribute);
+    });
+}
+
+function drawHourChart(data, attribute) {
+    // Limpiar el contenedor antes de dibujar el nuevo gráfico
+    d3.select("#chart-hour-meteorological").select("svg").remove();
+    var margin = { top: 20, right: 20, bottom: 30, left: 50 };
+    var width = 900 - margin.left - margin.right;
+    var height = 100 - margin.top - margin.bottom;
+
+    var svg = d3.select("#chart-hour-meteorological")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    svg.append("text")
+        .attr("x", -margin.left)
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "start")
+        .style("font-size", "16px")
+        .text(attribute);
+
+    // Definir dominios y escalas
+    var xHour = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { return d.time; }))
+        .range([0, width]);
+
+    var yHour = d3.scaleLinear()
+        .domain(d3.extent(data, function(d) { return d[attribute]; }))
+        .nice()
+        .range([height, 0]);
+
+    // Añadir ejes
+    svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(xHour));
+
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(d3.axisLeft(yHour));
+
+    // Definir la línea
+    var line = d3.line()
+        .x(function(d) { return xHour(d.time); })
+        .y(function(d) { return yHour(d[attribute]); });
+
+    // Dibujar la línea
+    svg.append("path")
+        .datum(data)
+        .attr("class", "line")
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+
+    // Añadir tooltips u otras interacciones si las necesitas
+    svg.selectAll(".dot")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("class", "dot")
+        .attr("r", 5)
+        .attr("cx", function(d) { return xHour(d.time); })
+        .attr("cy", function(d) { return yHour(d[attribute]); })
+        .style("fill", "steelblue")
+        .style("opacity", 0)
+        .on("mouseover", function(d) {
+            var tooltip = d3.select("#tooltip")
+                .style("left", (d3.event.pageX + 10) + "px")
+                .style("top", (d3.event.pageY - 20) + "px")
+                .style("opacity", 0.9);
+            tooltip.html(
+                "Valor de " + attribute + ": " + d[attribute]);
+        });
+}
+
+
+/////////////////
+
+
+
+function updateWeatherChartForStation(stationId) {
     weatherAttributes.forEach(function(attribute) {
         var svg = d3.select("#chart-" + attribute).select("svg").select("g");
 
@@ -769,17 +814,7 @@ function updateWeatherChartForStation(stationId) {
                 .attr("cy", function(d) { return y(d[attribute]); })
                 .style("fill", "red")
                 .style("opacity", 0)
-                .on("mouseover", function(d) {
-                    var tooltip = d3.select("#tooltip")
-                        .style("left", (d3.event.pageX + 10) + "px")
-                        .style("top", (d3.event.pageY - 20) + "px")
-                        .style("opacity", 0.9);
-                    tooltip.html("Fechaaaaaaaaaa: " + formatDate(d.date) + "<br/>" +
-                        "Valor de " + attribute + ": " + d[attribute]);
-                })
-                .on("mouseout", function(d) {
-                    d3.select("#tooltip").style("opacity", 0);
-                });
+
         });
     });
 }
@@ -1008,9 +1043,12 @@ d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
         })   
         .on("click", function(d) {
             var stationId = d.stationId;
-            console.log("Haz clic en la imagen de la estación ME0:", stationId);
+            var date = $("#datepicker").datepicker("getDate");
+            console.log("Haz clic en la imagen de la estación ME0:", stationId, "para la fecha:", date);
             updateWeatherChartForStation(stationId); // Actualizar gráficos con la nueva estación
 
         });
 });
 
+///////////////// GRAFICOS PARA COMPARACION DE CONTAMINANTES.
+///////////////////////////

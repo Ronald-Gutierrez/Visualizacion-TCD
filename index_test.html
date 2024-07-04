@@ -51,7 +51,7 @@
             width: 920px;
             top: 450px;
             height: 220px;
-            left: -981px;
+            left: -921px;
         }
         #chart-hour-pollution{
             width: 920px;
@@ -114,6 +114,10 @@
         .content {
             margin-top: 50px; /* Deja espacio para el título */
         }
+        .checkbox-buttons{
+            margin-top: -27px;
+        }
+
     </style>
 </head>
 <body>
@@ -167,22 +171,76 @@
     </div>
     <!-- Visor por hora de datos meteorologicos -->
     <div id="chart-hour-meteorological" class="chart-container">
+        <div class="title"> <img src="img/logo-serie-hour.png" width="24px" height="15px" alt="Leyenda"  id="legend-container"> Visor por Hora de Meteorologia</div>
+        <div class="content">
+            <div id="chart-for-hour" class="chart-for-hour"></div>
+        </div>
+    </div>
+    <!-- Visor de comparacion de contaminantes -->
+    <div id="chart-hour-compare" class="chart-container">
         <div class="title">
             <img src="img/logo-serie-hour.png" width="24px" height="15px" alt="Leyenda" id="legend-container">
-            Visor por Hora de Meteorologia
+            Comparacion de contaminantes
         </div>
         <div class="content">
             <div id="chart-for-hour" class="chart-for-hour"></div>
+            
+            <div class="checkbox-buttons">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="contaminante" value="PM2_5">
+                    PM2.5
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="contaminante" value="PM10">
+                    PM10
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="contaminante" value="NO2">
+                    NO2
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="contaminante" value="CO">
+                    CO
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="contaminante" value="O3">
+                    O3
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" name="contaminante" value="SO2">
+                    SO2
+                </label>
+            </div>
+            
+            <div class="station-select">
+                <label for="station">Seleccione Estación:</label>
+                <select id="station" name="station">
+                    <option value="station1">Estación 1</option>
+                    <option value="station2">Estación 2</option>
+                    <option value="station3">Estación 3</option>
+                    <!-- Agrega más opciones de estación según sea necesario -->
+                </select>
+            </div>
+            
+            <div class="date-select">
+                <label>
+                    <input type="radio" name="date-range" value="specific-date" checked>
+                    Día Específico
+                </label>
+                <input type="date" id="specific-date" name="specific-date">
+                
+                <label>
+                    <input type="radio" name="date-range" value="date-range">
+                    Rango de Fechas
+                </label>
+                <input type="date" id="start-date" name="start-date" disabled>
+                <input type="date" id="end-date" name="end-date" disabled>
+            </div>
+            
         </div>
     </div>
 
-    <!-- Visor de comparacion de contaminantes -->
-    <div id="chart-hour-compare" class="chart-container">
-        <div class="title"> <img src="img/logo-serie-hour.png" width="24px" height="15px" alt="Leyenda"  id="legend-container">Compracion de contaminantes</div>
-        <div class="content">
-            <div id="chart-for-hour" class="chart-for-hour"></div>
-        </div>
-    </div>
+
     <!-- Visor de correlacion de contamiantnes y meteorologicos -->
     <div id="chart-hour-correlation" class="chart-container">
         <div class="title"> <img src="img/logo-corr.png" width="24px" height="15px" alt="Leyenda"  id="legend-container">Correlacion de contaminantes y datos meteorologicos</div>
