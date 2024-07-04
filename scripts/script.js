@@ -577,27 +577,31 @@ function updateOtherCharsMeteorogical(date) {
                 .attr("x2", cx)
                 .attr("y2", height)
                 .style("stroke", "red")
-                .style("stroke-width", 2);
+                .style("stroke-width", 2)
+                .on("click", function() {
+                    console.log("Haz clic en la línea vertical para la fecha: " + formatDate(filteredData[0].date));
+            });
 
-            // Agregar el evento de mouseover
-            svg.append("rect")
-                .attr("class", "highlight-line")
-                .attr("x", cx - 5)
-                .attr("y", 0)
-                .attr("width", 10)
-                .attr("height", height)
-                .style("opacity", 0)
-                .on("mouseover", function(d) {
-                    var tooltip = d3.select("#tooltip")
-                        .style("left", (d3.event.pageX + 10) + "px")
-                        .style("top", (d3.event.pageY - 20) + "px")
-                        .style("opacity", 0.9);
-                    tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
-                        "Valor de " + attribute + ": " + d[attribute]);
-                })
-                .on("mouseout", function(d) {
-                    d3.select("#tooltip").style("opacity", 0);
-                });
+// Asumiendo que `svg` está correctamente definido
+svg.append("rect")
+    .attr("class", "highlight-line")
+    .attr("x", cx - 5)
+    .attr("y", 0)
+    .attr("width", 10)
+    .attr("height", height)
+    .style("opacity", 0)
+    .on("mouseover", function(event, d) { // Usa `event` y `d` como parámetros
+        var tooltip = d3.select("#tooltip")
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 20) + "px")
+            .style("opacity", 0.9);
+        tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
+            "Valor de " + attribute + ": " + d[attribute]);
+    })
+    .on("mouseout", function(event, d) { // Usa `event` y `d` como parámetros
+        d3.select("#tooltip").style("opacity", 0);
+    });
+
         }
     });
 
@@ -678,7 +682,7 @@ function drawWeatherChart(attribute, containerId) {
                     .style("left", (d3.event.pageX + 10) + "px")
                     .style("top", (d3.event.pageY - 20) + "px")
                     .style("opacity", 0.9);
-                tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
+                tooltip.html("Fechas: " + formatDate(d.date) + "<br/>" +
                     "Valor de " + attribute + ": " + d[attribute]);
             })
             .on("mouseout", function(d) {
@@ -770,7 +774,7 @@ function updateWeatherChartForStation(stationId) {
                         .style("left", (d3.event.pageX + 10) + "px")
                         .style("top", (d3.event.pageY - 20) + "px")
                         .style("opacity", 0.9);
-                    tooltip.html("Fecha: " + formatDate(d.date) + "<br/>" +
+                    tooltip.html("Fechaaaaaaaaaa: " + formatDate(d.date) + "<br/>" +
                         "Valor de " + attribute + ": " + d[attribute]);
                 })
                 .on("mouseout", function(d) {
@@ -837,85 +841,85 @@ d3.json("map/beijing.json")
     })
     .catch(error => console.error('Error cargando o parseando los datos:', error));
 
-
-// Función para cargar los datos y actualizar las formas en el mapa según la fecha seleccionada
-function updateMapWithDate(selectedDate, stationData) {
-    // Carga los datos de AQI general por día
-    d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
-        // Filtra los datos de AQI para la fecha seleccionada
-        var filteredData = aqiData.filter(function(d) {
-            return d.date === selectedDate;
-        });
-
-        // Crea un objeto para mapear AQI a colores
-        var aqiColorScale = d3.scaleOrdinal()
-            .domain([1, 2, 3, 4, 5, 6])
-            .range(["rgb(0, 128, 0)", "rgb(238, 176, 9)", "rgb(250, 145, 74)", 
-                    "rgb(255, 0, 0)", "rgb(128, 0, 128)", "rgb(165, 42, 42)"]);
-
-        // Actualiza las formas en el mapa con los nuevos datos de AQI
-        g.selectAll(".station-shape")
-            .data(stationData)
-            .join("path")
-            .attr("class", "station-shape")
-            .attr("transform", function(d) {
-                return `translate(${projection([+d.longitude, +d.latitude])})`; // Transforma según la proyección
-            })
-            .attr("d", function(d) {
-                // Define diferentes formas según la nota
-                switch (d.Notes) {
-                    case "Urban":
-                        return d3.symbol().type(d3.symbolSquare)();
-                    case "Cross Reference":
-                        return d3.symbol().type(d3.symbolDiamond)();
-                    case "Rural":
-                        return d3.symbol().type(d3.symbolCircle)();
-                    case "Traffic":
-                        return d3.symbol().type(d3.symbolTriangle)();
-                    default:
-                        return d3.symbol().type(d3.symbolStar)();
-                }
-            })
-            .attr("fill", function(d) {
-                // Obtén el AQI para esta estación en la fecha seleccionada
-                var aqiValue = filteredData.find(function(aqi) {
-                    return aqi.stationId === d.stationId;
-                }).AQI_general;
-                // Devuelve el color correspondiente según el AQI
-                return aqiColorScale(aqiValue);
-            })
-            .attr("stroke", "#000")
-            .attr("stroke-width", 1)
-            .style("opacity", 0.8)
-            .on("mouseover", function(d) {
-                var stationId = d.stationId; // Obtén el station_id desde los datos
-                var formattedId = formatStationId(stationId);
-                
-                // Muestra el tooltip
-                d3.select("#tooltip")
-                    .style("left", (d3.event.pageX + 10) + "px")
-                    .style("top", (d3.event.pageY - 20) + "px")
-                    .style("opacity", 0.9)
-                    .html("Estación de AQ: " + formattedId + "<br/>" +"Area: "+ d.Notes+"<br/>" +
-                        "AQI: " + filteredData.find(function(aqi) {
-                            return aqi.stationId === stationId;
-                        }).AQI_general);
-            })
-            .on("mouseout", function() {
-                // Oculta el tooltip al quitar el mouse
-                d3.select("#tooltip").style("opacity", 0);
-            })     
-            .on("click", function(d) {
-                var stationId = d.stationId;
-                console.log("Haz clic en la estación AQI:", stationId);
-                updateChartsForStation(stationId); // Actualiza gráficos con la nueva estación
+    function updateMapWithDate(selectedDate, stationData) {
+        // Carga los datos de AQI general por día
+        d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
+            // Filtra los datos de AQI para la fecha seleccionada
+            var filteredData = aqiData.filter(function(d) {
+                return d.date === selectedDate;
             });
-
-    }).catch(function(error) {
-        console.log("Error al cargar los datos de AQI CSV:", error); // Maneja errores de carga de datos de AQI
-    });
-}
-
+    
+            // Crea un objeto para mapear AQI a colores
+            var aqiColorScale = d3.scaleOrdinal()
+                .domain([1, 2, 3, 4, 5, 6])
+                .range(["rgb(0, 128, 0)", "rgb(238, 176, 9)", "rgb(250, 145, 74)", 
+                        "rgb(255, 0, 0)", "rgb(128, 0, 128)", "rgb(165, 42, 42)"]);
+    
+            // Actualiza las formas en el mapa con los nuevos datos de AQI
+            g.selectAll(".station-shape")
+                .data(stationData)
+                .join("path")
+                .attr("class", "station-shape")
+                .attr("transform", function(d) {
+                    return `translate(${projection([+d.longitude, +d.latitude])})`; // Transforma según la proyección
+                })
+                .attr("d", function(d) {
+                    // Define diferentes formas según la nota
+                    switch (d.Notes) {
+                        case "Urban":
+                            return d3.symbol().type(d3.symbolSquare)();
+                        case "Cross Reference":
+                            return d3.symbol().type(d3.symbolDiamond)();
+                        case "Rural":
+                            return d3.symbol().type(d3.symbolCircle)();
+                        case "Traffic":
+                            return d3.symbol().type(d3.symbolTriangle)();
+                        default:
+                            return d3.symbol().type(d3.symbolStar)();
+                    }
+                })
+                .attr("fill", function(d) {
+                    // Obtén el AQI para esta estación en la fecha seleccionada
+                    var aqiValue = filteredData.find(function(aqi) {
+                        return aqi.stationId === d.stationId;
+                    }).AQI_general;
+                    // Devuelve el color correspondiente según el AQI
+                    return aqiColorScale(aqiValue);
+                })
+                .attr("stroke", "#000")
+                .attr("stroke-width", 1)
+                .style("opacity", 0.8)
+                .on("mouseover", function(d) {
+                    var stationId = d.stationId; // Obtén el station_id desde los datos
+                    var formattedId = formatStationId(stationId);
+                    
+                    // Muestra el tooltip
+                    d3.select("#tooltip")
+                        .style("left", (d3.event.pageX + 10) + "px")
+                        .style("top", (d3.event.pageY - 20) + "px")
+                        .style("opacity", 0.9)
+                        .html("Estación de AQ: " + formattedId + "<br/>" +
+                            "Area: "+ d.Notes+"<br/>" +
+                            "AQI: " + filteredData.find(function(aqi) {
+                                return aqi.stationId === stationId;
+                            }).AQI_general);
+                })
+                .on("mouseout", function() {
+                    // Oculta el tooltip al quitar el mouse
+                    d3.select("#tooltip").style("opacity", 0);
+                })     
+                .on("click", function(d) {
+                    var stationId = d.stationId;
+                    console.log("Haz clic en la estación AQI:", stationId);
+                    updateChartsForStation(stationId); // Actualiza gráficos con la nueva estación
+                });
+    
+        }).catch(function(error) {
+            console.log("Error al cargar los datos de AQI CSV:", error); // Maneja errores de carga de datos de AQI
+        });
+    }
+    
+    
 // Función para obtener una fecha aleatoria dentro del rango disponible en el dataset
 function getRandomDate(data) {
     var dates = data.map(function(d) { return d.date; });
