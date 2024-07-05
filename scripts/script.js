@@ -477,9 +477,175 @@ function updateOtherCharts(date,stationId) {
 
 }
 
-function drawCorrelationPollutions(date,stationId) {
+function drawCorrelationPollutions(date, stationId) {
+    console.log("Estación:", stationId);
+    console.log("Fecha:", date);
 
+    d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
+        // Filtrar los datos por fecha y estación
+        data = data.filter(function(d) {
+            return d.stationId === stationId && d.date === formatDate(date); // Asegúrate de tener la fecha en el formato correcto
+        });
+
+        // Obtener los nombres de los contaminantes
+        var pollutants = ["PM2_5", "PM10", "NO2", "CO", "O3", "SO2"];
+
+        // Crear una matriz de datos para calcular la correlación
+        var matrix = [];
+        pollutants.forEach(function(pollutant1) {
+            var row = [];
+            pollutants.forEach(function(pollutant2) {
+                // Obtener los valores de los contaminantes
+                var values1 = data.map(function(d) { return +d[pollutant1]; });
+                var values2 = data.map(function(d) { return +d[pollutant2]; });
+
+                // Calcular la correlación de Pearson
+                var correlation = pearsonCorrelation(values1, values2);
+
+                // Añadir el valor de correlación a la fila
+                row.push(correlation);
+            });
+            // Añadir la fila a la matriz
+            matrix.push(row);
+        });
+
+        // Renderizar la matriz de correlación usando D3.js
+        var chartContainer = d3.select("#chart-hour-correlation .chart-hour-correlation");
+        renderCorrelationMatrix(matrix, pollutants, chartContainer);
+    });
 }
+
+// Función para calcular la correlación de Pearson
+function pearsonCorrelation(x, y) {
+    var sumX = 0;
+    var sumY = 0;
+    var sumXY = 0;
+    var sumX2 = 0;
+    var sumY2 = 0;
+
+    var n = x.length;
+
+    for (var i = 0; i < n; i++) {
+        sumX += x[i];
+        sumY += y[i];
+        sumXY += x[i] * y[i];
+        sumX2 += x[i] * x[i];
+        sumY2 += y[i] * y[i];
+    }
+
+    var numerator = sumXY - (sumX * sumY / n);
+    var denominator = Math.sqrt((sumX2 - sumX * sumX / n) * (sumY2 - sumY * sumY / n));
+
+    if (denominator === 0) return 0;
+
+    return numerator / denominator;
+}
+// Función para renderizar la matriz de correlación
+function renderCorrelationMatrix(matrix, pollutants, container) {
+    // Limpiar el contenedor antes de renderizar
+    container.selectAll("*").remove();
+
+    // Configurar la escala de color para la matriz de correlación
+    var colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
+        .domain([-1, 1]);
+
+    // Configurar el tamaño de la celda y el margen
+    var cellSize = 52;
+    var margin = { top: 60, right: 20, bottom: 20, left: 60 }; // Aumentar margen para los nombres
+
+    // Calcular el tamaño del contenedor
+    var size = (pollutants.length * cellSize);
+
+    // Configurar el lienzo SVG
+    var svg = container.append("svg")
+        .attr("width", size + margin.left + margin.right)
+        .attr("height", size + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+    // Configurar el texto de los contaminantes para las filas
+    var textRow = svg.selectAll(".pollutantRow")
+        .data(pollutants)
+        .enter().append("text")
+        .text(function(d) { return d; })
+        .attr("x", -6)
+        .attr("y", function(d, i) { return i * cellSize; })
+        .style("text-anchor", "end")
+        .attr("transform", "translate(-6," + cellSize / 1.5 + ")");
+
+    // Configurar el texto de los contaminantes para las columnas
+    var textCol = svg.selectAll(".pollutantCol")
+        .data(pollutants)
+        .enter().append("text")
+        .text(function(d) { return d; })
+        .attr("x", 0)
+        .attr("y", function(d, i) { return i * cellSize; })
+        .style("text-anchor", "start")
+        .attr("transform", "translate(" + cellSize / 1.5 + ", -6) rotate(-90)");
+
+    // Configurar los rectángulos de la matriz de correlación con texto de correlación
+    var rect = svg.selectAll(".rect")
+        .data(matrix)
+        .enter().append("g")
+        .selectAll("rect")
+        .data(function(d, i) { return d.map(function(value, j) { return {row: i, col: j, value: value}; }); })
+        .enter().append("rect")
+        .attr("class", "rect")
+        .attr("x", function(d) { return d.col * cellSize; })
+        .attr("y", function(d) { return d.row * cellSize; })
+        .attr("width", cellSize)
+        .attr("height", cellSize)
+        .style("fill", function(d) { return colorScale(d.value); })
+        .append("title")
+        .text(function(d) { return "Correlación: " + d.value.toFixed(2); });
+
+    // Añadir texto de correlación dentro de cada rectángulo
+    rect.append("text")
+        .attr("x", cellSize / 2)
+        .attr("y", cellSize / 2)
+        .attr("dy", "0.3em")
+        .style("text-anchor", "middle")
+        .style("fill", "white")
+        .text(function(d) { return d.value.toFixed(2); });
+
+    // // Añadir título
+    // svg.append("text")
+    //     .attr("x", (size + margin.left + margin.right) / 2)
+    //     .attr("y", -margin.top / 2)
+    //     .attr("text-anchor", "middle")
+    //     .text("Matriz de Correlación de Contaminantes");
+
+    // // Añadir leyenda de colores
+    // var legend = svg.append("g")
+    //     .attr("id", "legend-container")
+    //     .attr("transform", "translate(" + (size + margin.left + margin.right - 100) + "," + margin.top + ")");
+
+    // var legendScale = d3.scaleLinear()
+    //     .domain([-1, 1])
+    //     .range([0, 100]);
+
+    // var legendAxis = d3.axisRight(legendScale)
+    //     .tickSize(13)
+    //     .ticks(5);
+
+    // legend.append("image")
+    //     .attr("xlink:href", "img/logo-corr.png")
+    //     .attr("width", 24)
+    //     .attr("height", 15)
+    //     .attr("transform", "translate(0, -10)");
+
+    // legend.append("text")
+    //     .attr("x", 30)
+    //     .attr("y", 0)
+    //     .text("Leyenda de Correlación");
+
+    // legend.append("g")
+    //     .attr("transform", "translate(30,20)")
+    //     .call(legendAxis);
+}
+
+
+
 
 //=======================================================================================================
 //VIZUALIZACION DE METOROLOGIA
