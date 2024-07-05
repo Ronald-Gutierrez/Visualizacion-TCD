@@ -157,7 +157,7 @@ function drawChart(variable, containerId, stationId) {
             
             // Llamar a la función para dibujar el gráfico por hora
             updateHourlyChartForStation(selectedRange, stationId, variable);
-            
+
         }
 
         svg.selectAll(".dot")
@@ -190,7 +190,7 @@ function drawChart(variable, containerId, stationId) {
                 // Si el punto no estaba ampliado, ampliarlo y resaltar otros puntos
                 if (!isEnlarged) {
                     showTimeSeries(d.date);
-                    updateOtherCharts(d.date);
+                    updateOtherCharts(d.date,d.stationId);
                     clickedCircle
                         .transition()
                         .duration(200)
@@ -388,12 +388,13 @@ function UpdateChart(variable, containerId, stationId) {
                 // Si el punto no estaba ampliado, ampliarlo y resaltar otros puntos
                 if (!isEnlarged) {
                     showTimeSeries(d.date);
-                    updateOtherCharts(d.date);
+                    updateOtherCharts(d.date,d.stationId);
                     clickedCircle
                         .transition()
                         .duration(200)
                         .attr("r", 15);
                 }
+                drawCorrelationPollutions();
             })
             
             .on("mouseover", function(d) {
@@ -454,7 +455,7 @@ function showTimeSeries(date) {
     console.log("Mostrar serie temporal para la fecha: " + formatDate(date));
 }
 
-function updateOtherCharts(date) {
+function updateOtherCharts(date,stationId) {
     // Vuelve al tamaño original todos los puntos de todas las gráficas y elimina el borde amarillo
     d3.selectAll(".dot")
         .attr("r", 3) // Vuelve al tamaño original
@@ -470,8 +471,15 @@ function updateOtherCharts(date) {
 
     // Implementa la lógica para resaltar la fecha seleccionada en otras gráficas
     console.log("Actualizar otras gráficas para la fecha: " + formatDate(date));
+    drawCorrelationPollutions(date,stationId);
+
+
+
 }
 
+function drawCorrelationPollutions(date,stationId) {
+
+}
 
 //=======================================================================================================
 //VIZUALIZACION DE METOROLOGIA
@@ -540,6 +548,7 @@ function updateOtherCharsMeteorogical(date) {
     });
 
     console.log("Actualizar otras gráficas para la fecha: " + formatDate(date));
+    
 }
 
 
@@ -1052,3 +1061,227 @@ d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
 
 ///////////////// GRAFICOS PARA COMPARACION DE CONTAMINANTES.
 ///////////////////////////
+// Cargar los datos CSV usando D3.js
+d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
+    // Función para convertir fechas y valores de contaminantes
+    var parseDate = d3.timeParse("%Y-%m-%d %H:%M:%S");
+    data.forEach(function(d) {
+        d.date = parseDate(d.date + " " + d.time); // Combinar fecha y hora
+        d.PM2_5 = +d.PM2_5;
+        d.PM10 = +d.PM10;
+        d.NO2 = +d.NO2;
+        d.CO = +d.CO;
+        d.O3 = +d.O3;
+        d.SO2 = +d.SO2;
+    });
+
+    // Extraer las estaciones únicas de los datos
+    var stations = d3.map(data, function(d) { return d.stationId; }).keys();
+
+    // Ordenar las estaciones alfabéticamente (opcional)
+    stations.sort();
+
+    // Selección del elemento <select> de estaciones
+    var stationSelect = d3.select("#station");
+
+    // Agregar opciones de estación al elemento <select>
+    stationSelect.selectAll("option")
+        .data(stations)
+        .enter().append("option")
+        .attr("value", function(d) { return d; })
+        .text(function(d) { return formatStationName(d); });
+
+    // Función para formatear el nombre de la estación
+    function formatStationName(stationId) {
+        // Convertir la inicial a mayúscula y quitar "_aq" al final
+        var formattedName = stationId.charAt(0).toUpperCase() + stationId.slice(1).replace(/_aq$/, "");
+        return "Estación " + formattedName;
+    }
+    // Función para dibujar el gráfico de línea
+    function drawLineChart(selectedContaminants, selectedStation, startDate, endDate) {
+        // Filtrar datos para la estación seleccionada y rango de fechas
+        var filteredData = data.filter(function(d) {
+            return d.stationId === selectedStation &&
+                (!startDate || d.date >= startDate) &&
+                (!endDate || d.date <= endDate);
+        });
+
+        // Configurar dimensiones y márgenes del gráfico
+        var margin = { top: 50, right: 30, bottom: 50, left: 60 };
+        var width = 850 - margin.left - margin.right;
+        var height = 300 - margin.top - margin.bottom;
+
+        // Remover gráfico anterior si existe
+        d3.select("#chart-for-hour-compare").selectAll("*").remove();
+
+        // Crear el lienzo SVG
+        var svg = d3.select("#chart-for-hour-compare")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        // Crear escalas x e y
+        var xScale = d3.scaleTime()
+            .domain(d3.extent(filteredData, function(d) { return d.date; }))
+            .range([0, width]);
+
+        var yScale = d3.scaleLinear()
+            .domain([0, d3.max(filteredData, function(d) {
+                var maxVal = 0;
+                selectedContaminants.forEach(function(contaminant) {
+                    maxVal = Math.max(maxVal, d[contaminant]);
+                });
+                return maxVal;
+            })])
+            .nice()
+            .range([height, 0]);
+
+        // Configurar el eje x e y
+        var xAxis = d3.axisBottom(xScale);
+        var yAxis = d3.axisLeft(yScale);
+
+        // Añadir líneas y puntos al lienzo para cada contaminante seleccionado
+        selectedContaminants.forEach(function(contaminant) {
+            // Crear línea
+            svg.append("path")
+                .datum(filteredData)
+                .attr("class", "line")
+                .attr("fill", "none")
+                .attr("stroke", contaminantColor(contaminant))
+                .attr("stroke-width", 2)
+                .attr("d", d3.line()
+                    .x(function(d) { return xScale(d.date); })
+                    .y(function(d) { return yScale(d[contaminant]); })
+                );
+
+            // Añadir puntos con tooltips
+            svg.selectAll(".dot-" + contaminant)
+                .data(filteredData)
+                .enter().append("circle")
+                .attr("class", "dot-" + contaminant)
+                .attr("r", 3) // Tamaño reducido de los puntos
+                .attr("cx", function(d) { return xScale(d.date); })
+                .attr("cy", function(d) { return yScale(d[contaminant]); })
+                .style("fill", contaminantColor(contaminant))
+                .style("stroke", "#fff")
+                .style("stroke-width", 1)
+                .on("mouseover", function(d) {
+                    // Mostrar tooltip al pasar el cursor
+                    var tooltipText = "Fecha: " + d3.timeFormat("%Y-%m-%d %H:%M:%S")(d.date) + "<br>" +
+                                      "Contaminante: " + contaminant + "<br>" +
+                                      "Valor: " + d[contaminant];
+                    showTooltip(tooltipText);
+                })
+                .on("mouseout", function() {
+                    // Ocultar tooltip al quitar el cursor
+                    hideTooltip();
+                });
+        });
+
+        // Añadir ejes x e y
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis);
+
+        // Añadir etiqueta al eje y
+        svg.append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("y", 0 - margin.left)
+            .attr("x", 0 - (height / 2))
+            .attr("dy", "1em")
+            .style("text-anchor", "middle")
+            .text("Niveles de Contaminante");
+
+        // Añadir título al gráfico
+        svg.append("text")
+            .attr("x", (width / 2))
+            .attr("y", 0 - (margin.top / 2))
+            .attr("text-anchor", "middle")
+            .style("font-size", "16px")
+            .text("Comparación de Contaminantes en " + formatStationName(selectedStation));
+
+        // Función para asignar colores a cada contaminante
+        function contaminantColor(contaminant) {
+            // Definir colores según el contaminante
+            switch (contaminant) {
+                case "PM2_5":
+                    return "blue";
+                case "PM10":
+                    return "green";
+                case "SO2":
+                    return "red";
+                case "NO2":
+                    return "orange";
+                case "CO":
+                    return "purple";
+                case "O3":
+                    return "brown";
+                default:
+                    return "black";
+            }
+        }
+
+        // Función para mostrar tooltips
+        var tooltip = d3.select("body").append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        function showTooltip(text) {
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+            tooltip.html(text)
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        }
+
+        function hideTooltip() {
+            tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
+        }
+    }
+
+    // Función para manejar el cambio en la selección de contaminantes y fechas
+    function updateChart() {
+        var selectedContaminants = [];
+        d3.selectAll("input[name='contaminante']:checked").each(function() {
+            selectedContaminants.push(this.value);
+        });
+
+        var selectedStation = d3.select("#station").node().value;
+        var startDate = null, endDate = null;
+
+        // Verificar si se ha seleccionado un rango de fechas
+        if (d3.select("input[name='date-range']:checked").node().value === "date-range") {
+            startDate = new Date(d3.select("#start-date").node().value);
+            endDate = new Date(d3.select("#end-date").node().value);
+        } else {
+            startDate = new Date(d3.select("#specific-date").node().value);
+            endDate = new Date(startDate); // Para asegurar que la fecha de inicio y fin sean iguales
+            endDate.setHours(23, 59, 59); // Establecer hora máxima para la fecha de fin
+        }
+
+        // Si se seleccionó un solo día, ajustar las fechas para incluir todas las horas de ese día
+        if (startDate.toDateString() === endDate.toDateString()) {
+            startDate.setHours(0, 0, 0); // Establecer hora mínima para la fecha de inicio
+            endDate.setHours(23, 59, 59); // Establecer hora máxima para la fecha de fin
+        }
+
+        // Llamar a la función para dibujar el gráfico con los parámetros seleccionados
+        drawLineChart(selectedContaminants, selectedStation, startDate, endDate);
+    }
+
+    // Escuchar cambios en la selección de contaminantes y fechas
+    d3.selectAll("input[name='contaminante'], input[name='date-range']").on("change", updateChart);
+
+    // Llamar a la función inicialmente con los valores por defecto
+    updateChart();
+});
