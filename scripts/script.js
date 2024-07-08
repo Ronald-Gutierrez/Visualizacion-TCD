@@ -1122,12 +1122,88 @@ d3.json("map/beijing.json")
                     var stationId = d.stationId;
                     console.log("Haz clic en la estación AQI:", stationId);
                     updateChartsForStation(stationId); // Actualiza gráficos con la nueva estación
+                    
                 });
     
         }).catch(function(error) {
             console.log("Error al cargar los datos de AQI CSV:", error); // Maneja errores de carga de datos de AQI
         });
     }
+    function updateMapWithDateMeteorological(selectedDate) {
+        // Eliminar todas las flechas existentes antes de cargar las nuevas
+        g.selectAll(".wind-arrow-group").remove();
+    
+        // Carga los datos de velocidad y dirección del viento por día
+        d3.csv("data/speed_wind_weather_for_day.csv").then(function(windData) {
+            // Filtra los datos de viento para la fecha seleccionada
+            var filteredWindData = windData.filter(function(d) {
+                return d.date === selectedDate;
+            });
+    
+            // Escala para ajustar el tamaño de la flecha según la velocidad del viento
+            var windScale = d3.scaleLinear()
+                .domain([0, d3.max(filteredWindData, function(d) { return +d.wind_speed; })])
+                .range([5, 25]); // Rango de tamaños de flecha
+    
+            // Crear un grupo para cada estación de monitoreo
+            var windArrows = g.selectAll(".wind-arrow-group")
+                .data(filteredWindData)
+                .join("g")
+                .attr("class", "wind-arrow-group")
+                .attr("transform", function(d) {
+                    var coords = projection([+d.longitude, +d.latitude]);
+                    return `translate(${coords[0]}, ${coords[1]}) rotate(${d.wind_direction})`;
+                });
+    
+            // Añadir la línea de la flecha
+            windArrows.append("line")
+                .attr("class", "wind-arrow-line")
+                .attr("x1", 0)
+                .attr("y1", 0)
+                .attr("x2", 0)
+                .attr("y2", function(d) {
+                    return -windScale(d.wind_speed); // Longitud de la línea escalada según la velocidad
+                })
+                .attr("stroke", "#ff0000")  // Color rojo
+                .attr("stroke-width", function(d) {
+                    return windScale(d.wind_speed) / 5; // Ancho de la línea escalado
+                });
+                
+    
+            // Añadir el triángulo de la punta de la flecha
+            windArrows.append("polygon")
+                .attr("class", "wind-arrow-head")
+                .attr("points", function(d) {
+                    var headSize = windScale(d.wind_speed) + 2; // Tamaño de la cabeza escalado
+                    return `0,-${headSize} 5,-${headSize - 5} -5,-${headSize - 5}`;
+                })
+                .attr("fill", "#ff0000");  // Color rojo
+                
+    
+            // Eventos del mouse para mostrar el tooltip
+            windArrows
+                .on("mouseover", function(d) {
+                    // Mostrar el tooltip con la dirección y velocidad del viento para ese día
+                    d3.select("#tooltip")
+                        .style("left", (d3.pageX + 10) + "px")
+                        .style("top", (d3.pageY - 20) + "px")
+                        .style("opacity", 0.9)
+                        .html("Dirección del Viento: " + d.wind_direction + "°<br/>" +
+                              "Velocidad del Viento: " + d.wind_speed + " m/s" +"°<br/>" +
+                                "Clima: " + d.weather);
+                })
+                
+                .on("mouseout", function() {
+                    // Ocultar el tooltip al quitar el mouse
+                    d3.select("#tooltip").style("opacity", 0);
+                });
+        }).catch(function(error) {
+            console.log("Error al cargar los datos de viento CSV:", error); // Maneja errores de carga de datos de viento
+        });
+    }
+    
+    
+    
     
     
 // Función para obtener una fecha aleatoria dentro del rango disponible en el dataset
@@ -1150,7 +1226,7 @@ d3.csv("data/lat_lon_beijijng_aq.csv").then(function(stationData) {
 
         // Llama a la función para actualizar las formas con la fecha aleatoria inicial
         updateMapWithDate(randomDate, stationData);
-
+        updateMapWithDateMeteorological(randomDate);
         // Configuración del datepicker
         $("#datepicker").datepicker({
             dateFormat: "yy-mm-dd",
@@ -1160,6 +1236,7 @@ d3.csv("data/lat_lon_beijijng_aq.csv").then(function(stationData) {
                 console.log("Fecha seleccionada:", date);
                 // Llama a la función para actualizar las formas con la nueva fecha seleccionada
                 updateMapWithDate(date, stationData);
+                updateMapWithDateMeteorological(date);
             }
         });
 
@@ -1223,6 +1300,7 @@ d3.csv("data/lat_lon_beijijng_meo.csv").then(function(data) {
             updateWeatherChartForStation(stationId); // Actualizar gráficos con la nueva estación
 
         });
+        // updateMapWithDateMeteorological(date);
 });
 
 ///////////////// GRAFICOS PARA COMPARACION DE CONTAMINANTES.
