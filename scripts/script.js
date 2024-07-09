@@ -1499,30 +1499,32 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
         d3.selectAll("input[name='contaminante']:checked").each(function() {
             selectedContaminants.push(this.value);
         });
-
+    
         var selectedStation = d3.select("#station").node().value;
         var startDate = null, endDate = null;
-
+    
         // Verificar si se ha seleccionado un rango de fechas
         if (d3.select("input[name='date-range']:checked").node().value === "date-range") {
             startDate = new Date(d3.select("#start-date").node().value);
             endDate = new Date(d3.select("#end-date").node().value);
+    
+            // Agregar un día al inicio del rango de fechas
+            startDate.setDate(startDate.getDate() + 1);
+            // Disminuir un día al final del rango de fechas
+            endDate.setDate(endDate.getDate()+1);
         } else {
             startDate = new Date(d3.select("#specific-date").node().value);
-            endDate = new Date(startDate); // Para asegurar que la fecha de inicio y fin sean iguales
-            endDate.setHours(23, 59, 59); // Establecer hora máxima para la fecha de fin
+            startDate.setDate(startDate.getDate() + 1); // Restar un día
+            endDate = new Date(startDate);
         }
-
-        // Si se seleccionó un solo día, ajustar las fechas para incluir todas las horas de ese día
-        if (startDate.toDateString() === endDate.toDateString()) {
-            startDate.setHours(0, 0, 0); // Establecer hora mínima para la fecha de inicio
-            endDate.setHours(23, 59, 59); // Establecer hora máxima para la fecha de fin
-        }
-
+    
+        // Ajustar las fechas para incluir todas las horas del día seleccionado
+        startDate.setHours(0, 0, 0, 0); // Establecer hora mínima para la fecha de inicio
+        endDate.setHours(23, 59, 59, 999); // Establecer hora máxima para la fecha de fin
+    
         // Llamar a la función para dibujar el gráfico con los parámetros seleccionados
         drawLineChart(selectedContaminants, selectedStation, startDate, endDate);
     }
-
     // Escuchar cambios en la selección de contaminantes y fechas
     d3.selectAll("input[name='contaminante'], input[name='date-range']").on("change", updateChart);
 
