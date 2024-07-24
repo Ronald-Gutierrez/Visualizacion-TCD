@@ -88,6 +88,7 @@ function drawAndUpdateChartsPollutionForHour(date, stationId, variable) {
         svg.append("g")
             .attr("class", "y axis")
             .call(d3.axisLeft(yHour).ticks(7));
+
     });
 }
 
@@ -180,8 +181,9 @@ function drawChart(variable, containerId, stationId) {
 
                 // Crear el gráfico emergente
                 // drawHourlyChart(variable, "popup-chart-container", stationId, d.date);
-                // updateOtherCharsMeteorogical(d.date);
+
                 drawAndUpdateChartsPollutionForHour(d.date, d.stationId, variable);
+                updateOtherCharsMeteorogical(d.date);
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
                     .attr("r", 3)
@@ -550,14 +552,15 @@ function renderCorrelationMatrix(matrix, pollutants, container) {
         .domain([-1, 1]);
 
     // Configurar el tamaño de la celda y el margen
-    var cellSize = 52;
-    var margin = { top: 60, right: 20, bottom: 20, left: 60 }; // Aumentar margen para los nombres
+    var cellSize = 28;
+    var margin = { top: 40, right: 20, bottom: 20, left: 45 }; // Aumentar margen para los nombres
 
     // Calcular el tamaño del contenedor
     var size = (pollutants.length * cellSize);
 
     // Configurar el lienzo SVG
     var svg = container.append("svg")
+
         .attr("width", size + margin.left + margin.right)
         .attr("height", size + margin.top + margin.bottom)
         .append("g")
@@ -571,7 +574,8 @@ function renderCorrelationMatrix(matrix, pollutants, container) {
         .attr("x", -6)
         .attr("y", function(d, i) { return i * cellSize; })
         .style("text-anchor", "end")
-        .attr("transform", "translate(-6," + cellSize / 1.5 + ")");
+        .attr("transform", "translate(-6," + cellSize / 1.5 + ")")
+        .style("font-size", "10px"); // Ajustar tamaño de fuente aquí
 
     // Configurar el texto de los contaminantes para las columnas
     var textCol = svg.selectAll(".pollutantCol")
@@ -581,7 +585,8 @@ function renderCorrelationMatrix(matrix, pollutants, container) {
         .attr("x", 0)
         .attr("y", function(d, i) { return i * cellSize; })
         .style("text-anchor", "start")
-        .attr("transform", "translate(" + cellSize / 1.5 + ", -6) rotate(-90)");
+        .attr("transform", "translate(" + cellSize / 1.5 + ", -6) rotate(-90)")
+        .style("font-size", "10px"); // Ajustar tamaño de fuente aquí
 
     // Configurar los rectángulos de la matriz de correlación con texto de correlación
     var rect = svg.selectAll(".rect")
@@ -606,6 +611,7 @@ function renderCorrelationMatrix(matrix, pollutants, container) {
         .attr("dy", "0.3em")
         .style("text-anchor", "middle")
         .style("fill", "white")
+        .style("font-size", "10px") // Ajustar tamaño de fuente aquí
         .text(function(d) { return d.value.toFixed(2); });
 
     // // Añadir título
@@ -643,6 +649,7 @@ function renderCorrelationMatrix(matrix, pollutants, container) {
     //     .attr("transform", "translate(30,20)")
     //     .call(legendAxis);
 }
+
 
 
 
@@ -687,6 +694,7 @@ function updateOtherCharsMeteorogical(date) {
             .style("stroke-dasharray", "3, 3")
             .on("click", function() {
                 console.log("Haz clic en la línea para la fecha: " + formatDate(date) );
+                
             })
             .on("mouseover", function() {
                 tooltip.style("visibility", "visible");
@@ -788,14 +796,6 @@ function drawWeatherChart(attribute, containerId,stationId) {
             .attr("cy", function(d) { return y(d[attribute]); })
             .style("fill", "red")
             .style("opacity", 0)
-            .on("mouseover", function(d) {
-                var tooltip = d3.select("#tooltip")
-                    .style("left", (d3.event.pageX + 10) + "px")
-                    .style("top", (d3.event.pageY - 20) + "px")
-                    .style("opacity", 0.9);
-                tooltip.html("Fechas: " + formatDate(d.date) + "<br/>" +
-                    "Valor de " + attribute + ": " + d[attribute]);
-            })
             .on("click", function(d) { // Agregar evento de clic
                 console.log("Estación:", d.station_id);
                 console.log("Atributo:", attribute);
@@ -804,6 +804,15 @@ function drawWeatherChart(attribute, containerId,stationId) {
                 drawHourForStationMeteorological(d.date, d.station_id, attribute);
 
             })
+            .on("mouseover", function(d) {
+                var tooltip = d3.select("#tooltip")
+                    .style("left", (d3.event.pageX + 10) + "px")
+                    .style("top", (d3.event.pageY - 20) + "px")
+                    .style("opacity", 0.9);
+                tooltip.html("Fechas: " + formatDate(d.date) + "<br/>" +
+                    "Valor de " + attribute + ": " + d[attribute]);
+            })
+
             .on("mouseout", function(d) {
                 d3.select("#tooltip").style("opacity", 0);
             });
@@ -1021,8 +1030,8 @@ svg.call(zoom);
 // Define la proyección para convertir coordenadas GeoJSON a coordenadas de pantalla
 const projection = d3.geoMercator()
     .center([116.4074, 39.9042]) // Centra el mapa en Beijing
-    .scale(10000) // Ajusta la escala para que quepa en el tamaño del mapa
-    .translate([width_MAP / 3.5, height_MAP / 4]);
+    .scale(12200) // Ajusta la escala para que quepa en el tamaño del mapa
+    .translate([width_MAP / 3.5, height_MAP / 3.2]);
 
 // Define el generador de ruta para convertir rutas GeoJSON a rutas SVG
 const path = d3.geoPath().projection(projection);
@@ -1122,6 +1131,7 @@ d3.json("map/beijing.json")
                     var stationId = d.stationId;
                     console.log("Haz clic en la estación AQI:", stationId);
                     updateChartsForStation(stationId); // Actualiza gráficos con la nueva estación
+                    evolutionEspatialPCA_All(stationId,selectedDate);
                     
                 });
     
@@ -1201,7 +1211,6 @@ d3.json("map/beijing.json")
             console.log("Error al cargar los datos de viento CSV:", error); // Maneja errores de carga de datos de viento
         });
     }
-    
     
     
     
@@ -1351,9 +1360,9 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
         });
 
         // Configurar dimensiones y márgenes del gráfico
-        var margin = { top: 50, right: 30, bottom: 50, left: 60 };
-        var width = 850 - margin.left - margin.right;
-        var height = 300 - margin.top - margin.bottom;
+        var margin = { top: 10, right: 70, bottom: 50, left: 20 };
+        var width = 690 - margin.left - margin.right;
+        var height = 200 - margin.top - margin.bottom;
 
         // Remover gráfico anterior si existe
         d3.select("#chart-for-hour-compare").selectAll("*").remove();
@@ -1441,7 +1450,7 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
             .attr("x", 0 - (height / 2))
             .attr("dy", "1em")
             .style("text-anchor", "middle")
-            .text("Niveles de Contaminante");
+            // .text("Niveles de Contaminante");
 
         // Añadir título al gráfico
         svg.append("text")
@@ -1449,7 +1458,7 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
             .attr("y", 0 - (margin.top / 2))
             .attr("text-anchor", "middle")
             .style("font-size", "16px")
-            .text("Comparación de Contaminantes en " + formatStationName(selectedStation));
+            // .text("Comparación de Contaminantes en " + formatStationName(selectedStation));
 
         // Función para asignar colores a cada contaminante
         function contaminantColor(contaminant) {
@@ -1531,3 +1540,193 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
     // Llamar a la función inicialmente con los valores por defecto
     updateChart();
 });
+
+// // // // // // // // // // // // // // // // // // // // // // // // 
+// ANALISIS DE LA EVOLUCION ESPACIAL, PCA POR ESTACION AL HACER CLICK EN EL MAPA
+
+// // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // 
+function evolutionEspatialPCA_All(stationId,selectedDate) {
+    console.log("Estacion seleccionada: ", stationId, "PCA");
+
+    d3.csv("data/data_pca_real.csv").then(data => {
+        // Filtra los datos por stationId
+        const filteredData = data.filter(d => d.stationId === stationId);
+
+        // Borra cualquier gráfico existente excepto el título
+        d3.select(".chart-pca").selectAll("*").remove();
+
+        // Configura las dimensiones y márgenes del gráfico
+        const margin = { top: 20, right: 30, bottom: 40, left: 50 },
+              width = 400 - margin.left - margin.right,
+              height = 500 - margin.top - margin.bottom;
+
+        // Añade el SVG
+        const svg = d3.select(".chart-pca")
+                      .append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                      .append("g")
+                      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Configura los ejes
+        const x = d3.scaleLinear()
+                    .domain(d3.extent(filteredData, d => +d.PC1))
+                    .range([0, width]);
+
+        const y = d3.scaleLinear()
+                    .domain(d3.extent(filteredData, d => +d.PC2))
+                    .range([height, 0]);
+
+        svg.append("g")
+           .attr("transform", `translate(0,${height})`)
+           .call(d3.axisBottom(x));
+
+        svg.append("g")
+           .call(d3.axisLeft(y));
+
+        // Calcula las distancias al origen y determina el color de cada punto
+        const color = d3.scaleSequential(d3.interpolateBlues)
+                        .domain([0, d3.max(filteredData, d => Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2))]);
+
+        // Añade los puntos
+        svg.selectAll("circle")
+           .data(filteredData)
+           .enter()
+           .append("circle")
+           .attr("cx", d => x(+d.PC1))
+           .attr("cy", d => y(+d.PC2))
+           .attr("r", 5)
+           .style("fill", d => color(Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2)));
+
+        // Añade el tooltip
+        const tooltip = d3.select("body").append("div")
+                          .attr("class", "tooltip")
+                          .style("opacity", 0);
+
+        svg.selectAll("circle")
+        //    .on("mouseover", (event, d) => {
+        //        const pc1 = +d.PC1;
+        //        const pc2 = +d.PC2;
+
+        //        // Verifica que pc1 y pc2 sean números válidos
+        //        if (!isNaN(pc1) && !isNaN(pc2)) {
+        //            const xCoord = x(pc1);
+        //            const yCoord = y(pc2);
+
+        //            tooltip.transition()
+        //                   .duration(200)
+        //                   .style("opacity", .9);
+        //            tooltip.html(`Estación: ${d.stationId}<br/>Fecha: ${d.date || 'N/A'} ${d.time || 'N/A'}<br/>Coordenadas: (${xCoord.toFixed(2)}, ${yCoord.toFixed(2)})`)
+        //                   .style("left", (event.pageX + 5) + "px")
+        //                   .style("top", (event.pageY - 28) + "px");
+        //        } else {
+        //            console.error('Error: PC1 o PC2 no son números válidos:', d.PC1, d.PC2);
+        //        }
+        //    })
+        //    .on("mouseout", () => {
+        //        tooltip.transition()
+        //               .duration(500)
+        //               .style("opacity", 0);
+        //    })
+           .on("click", (event, d) => {
+               console.log("Fecha seleccionada: ", d.date || 'N/A', d.time || 'N/A');
+               evolutionEspatialPCA_For_Day(stationId,selectedDate);
+
+           });
+    });
+}
+
+
+function evolutionEspatialPCA_For_Day(stationId, selectedDate) {
+    console.log("Estacion seleccionada: ", stationId, "Fecha seleccionada: ", selectedDate, "PCA");
+
+    d3.csv("data/data_pca_real.csv").then(data => {
+        // Filtra los datos por stationId y por la fecha seleccionada
+        const filteredData = data.filter(d => d.stationId === stationId && d.date === selectedDate);
+
+        // Borra cualquier gráfico existente excepto el título
+        d3.select(".chart-pca").selectAll("*:not(.chart-title)").remove();
+
+        // Configura las dimensiones y márgenes del gráfico
+        const margin = { top: 20, right: 30, bottom: 40, left: 50 },
+              width = 400 - margin.left - margin.right,
+              height = 500 - margin.top - margin.bottom;
+
+        // Añade el SVG
+        const svg = d3.select(".chart-pca")
+                      .append("svg")
+                      .attr("width", width + margin.left + margin.right)
+                      .attr("height", height + margin.top + margin.bottom)
+                      .append("g")
+                      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+        // Configura los ejes
+        const x = d3.scaleLinear()
+                    .domain(d3.extent(filteredData, d => +d.PC1))
+                    .range([0, width]);
+
+        const y = d3.scaleLinear()
+                    .domain(d3.extent(filteredData, d => +d.PC2))
+                    .range([height, 0]);
+
+        svg.append("g")
+           .attr("transform", `translate(0,${height})`)
+           .call(d3.axisBottom(x));
+
+        svg.append("g")
+           .call(d3.axisLeft(y));
+
+        // Calcula las distancias al origen y determina el color de cada punto
+        const color = d3.scaleSequential(d3.interpolateBlues)
+                        .domain([0, d3.max(filteredData, d => Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2))]);
+
+        // Añade los puntos
+        svg.selectAll("circle")
+           .data(filteredData)
+           .enter()
+           .append("circle")
+           .attr("cx", d => x(+d.PC1))
+           .attr("cy", d => y(+d.PC2))
+           .attr("r", 5)
+           .style("fill", d => color(Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2)))
+           .on("mouseover", (event, d) => {
+               const xCoord = x(+d.PC1);
+               const yCoord = y(+d.PC2);
+
+               // Asegúrate de que las coordenadas no sean NaN
+               if (!isNaN(xCoord) && !isNaN(yCoord)) {
+                   tooltip.transition()
+                          .duration(200)
+                          .style("opacity", .9);
+                   tooltip.html(`Estación: ${d.stationId}<br/>Fecha: ${d.date} ${d.time}<br/>Coordenadas: (${xCoord.toFixed(2)}, ${yCoord.toFixed(2)})`)
+                          .style("left", (event.pageX + 5) + "px")
+                          .style("top", (event.pageY - 28) + "px");
+               } else {
+                   console.error('Error: Coordenadas no válidas para el punto', d);
+               }
+           })
+           .on("mouseout", () => {
+               tooltip.transition()
+                      .duration(500)
+                      .style("opacity", 0);
+           })
+           .on("click", (event, d) => {
+               const xCoord = x(+d.PC1);
+               const yCoord = y(+d.PC2);
+            console.log("Fecha seleccionada: ", selectedDate);
+               // Asegúrate de que las coordenadas no sean NaN
+               if (!isNaN(xCoord) && !isNaN(yCoord)) {
+                   console.log("Fecha seleccionada: ", d.date, d.time);
+                   console.log("Coordenadas del punto: ", xCoord.toFixed(2), yCoord.toFixed(2));
+                   console.log("Estación: ", d.stationId);
+               } else {
+                   console.error('Error: Coordenadas no válidas para el punto', d);
+               }
+           });
+
+        // Añade el tooltip
+        const tooltip = d3.select("body").append("div")
+                          .attr("class", "tooltip")
+                          .style("opacity", 0);
+    });
+}
