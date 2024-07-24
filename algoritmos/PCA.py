@@ -82,6 +82,10 @@ else:
             pca = PCA(n_components=2)
             principal_components = pca.fit_transform(X_scaled)
 
+            # Imprimir varianza explicada
+            print("Varianza explicada por cada componente principal:", pca.explained_variance_ratio_)
+            print("Varianza explicada acumulada:", pca.explained_variance_ratio_.sum())
+
             # Crear un DataFrame con los componentes principales
             pca_df = pd.DataFrame(data=principal_components, columns=['PC1', 'PC2'])
             pca_df['stationId'] = aqi_station
@@ -96,8 +100,9 @@ else:
 
         # Reordenar y guardar el archivo PCA
         final_pca_df = final_pca_df[['stationId', 'date', 'time', 'PC1', 'PC2']]
-        final_pca_df.to_csv('data/data_pca_real.csv', index=False)
+        # final_pca_df.to_csv('data/data_pca_real.csv', index=False)
 
         print("Archivo PCA guardado como 'data/data_pca_real.csv'")
     else:
         print("No se generaron resultados PCA.")
+

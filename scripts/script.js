@@ -1640,7 +1640,7 @@ function evolutionEspatialPCA_All(stationId,selectedDate) {
 function evolutionEspatialPCA_For_Day(stationId, selectedDate) {
     console.log("Estacion seleccionada: ", stationId, "Fecha seleccionada: ", selectedDate, "PCA");
 
-    d3.csv("data/data_pca_real.csv").then(data => {
+    d3.csv("data/data_tsne_real.csv").then(data => {
         // Filtra los datos por stationId y por la fecha seleccionada
         const filteredData = data.filter(d => d.stationId === stationId && d.date === selectedDate);
 

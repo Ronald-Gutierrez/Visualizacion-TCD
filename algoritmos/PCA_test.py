@@ -76,3 +76,4 @@ plt.show()
 # Varianza explicada por cada componente principal
 print("Varianza explicada por cada componente principal:", pca.explained_variance_ratio_)
 print("Varianza explicada acumulada:", pca.explained_variance_ratio_.sum())
+
