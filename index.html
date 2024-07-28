@@ -69,28 +69,35 @@
             overflow: hidden; /* Evita el scroll */
             width: 220px;
             height: 280px;
-            top: -321px;
+            top: -587px;
             left: 1000px;
         }
         #chart-pca{
             overflow: hidden; /* Evita el scroll */
             width: 380px;
-            height: 540px;
-            top: -1196px;
+            height: 420px;
+            top: -1339px;
             left: 1000px;
         }
         #chart-hour-compare{
             overflow: hidden; /* Evita el scroll */
             width: 622px;
             height: 100px;
-            top: -20px;
+            top: -140px;
             left: 1250px;
         }
         #chart-for-hour-compare{
             overflow: hidden; /* Evita el scroll */
             width: 622px;
-            height: 160px;
-            top: -20px;
+            height: 140px;
+            top: -140px;
+            left: 1250px;
+        }
+        #chart-for-hour-compare2{
+            overflow: hidden; /* Evita el scroll */
+            width: 622px;
+            height: 140px;
+            top: -140px;
             left: 1250px;
         }
         #map-container {
@@ -100,7 +107,7 @@
             position: absolute;
             width: 460px;
             top: 10px;
-            height: 540px;
+            height: 420px;
             left: 1410px;
         }
         #date-selector {
@@ -197,7 +204,7 @@
     <div id="chart-hour-compare" class="chart-container">
         <div class="title">
             <img src="img/logo-serie-hour.png" width="24px" height="15px" alt="Leyenda" id="legend-container">
-            Parametros para comparar contaminantes
+            Parámetros para comparar contaminantes
         </div>
         <div class="content">
             <div class="checkbox-buttons">
@@ -227,11 +234,16 @@
                 </label>
             </div>
     
-            <!-- Select dinámico para las estaciones -->
+            <!-- Selectores dinámicos para las estaciones -->
             <div class="station-select">
-                <label for="station">Seleccione Estación:</label>
+                <label for="station">Seleccione Estación 1:</label>
                 <select id="station" name="station">
-                    <!-- Las opciones de estación se generarán dinámicamente aquí -->
+                </select>
+            </div>
+    
+            <div class="station-select">
+                <label for="station2">Seleccione Estación 2:</label>
+                <select id="station2" name="station2">
                 </select>
             </div>
     
@@ -251,11 +263,18 @@
             </div>
         </div>
     </div>
+    
 
     <!-- Visor por hora de datos COMPARE REAL -->
     <div id="chart-for-hour-compare" class="chart-container">
         <div class="content">
             <div id="chart-for-hour-compare" class="chart-for-hour-compare"></div>
+        </div>
+    </div>
+        <!-- Visor por hora de datos COMPARE REAL -->
+    <div id="chart-for-hour-compare2" class="chart-container">
+        <div class="content">
+            <div id="chart-for-hour-compare2" class="chart-for-hour-compare2"></div>
         </div>
     </div>
 

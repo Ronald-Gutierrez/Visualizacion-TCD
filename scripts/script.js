@@ -91,6 +91,7 @@ function drawAndUpdateChartsPollutionForHour(date, stationId, variable) {
 
     });
 }
+var currentStationId = "yufa_aq"; // Variable global para almacenar la estación actual
 
 
 function drawChart(variable, containerId, stationId) {
@@ -114,7 +115,7 @@ function drawChart(variable, containerId, stationId) {
         data = csvData; // Asignar los datos cargados a la variable global
 
         data = data.filter(function(d) {
-            return d.stationId === "yufa_aq";
+            return d.stationId === stationId;
         });
 
         var parseTime = d3.timeParse("%Y-%m-%d");
@@ -158,7 +159,6 @@ function drawChart(variable, containerId, stationId) {
             
             // Llamar a la función para dibujar el gráfico por hora
             updateHourlyChartForStation(selectedRange, stationId, variable);
-
         }
 
         svg.selectAll(".dot")
@@ -193,6 +193,7 @@ function drawChart(variable, containerId, stationId) {
                 if (!isEnlarged) {
                     showTimeSeries(d.date);
                     updateOtherCharts(d.date,d.stationId);
+                    
                     clickedCircle
                         .transition()
                         .duration(200)
@@ -381,6 +382,7 @@ function UpdateChart(variable, containerId, stationId) {
             .style("fill", function(d) { return color(d[variable]); })
             .on("click", function(d) {
                 var clickedCircle = d3.select(this);
+                
                 var isEnlarged = clickedCircle.attr("r") == 1;
                 // Restaurar todos los puntos al tamaño original y eliminar el borde amarillo
                 d3.selectAll(".dot")
@@ -391,12 +393,13 @@ function UpdateChart(variable, containerId, stationId) {
                 if (!isEnlarged) {
                     showTimeSeries(d.date);
                     updateOtherCharts(d.date,d.stationId);
+                    // drawCorrelationPollutions(d.date,d.stationId);
                     clickedCircle
                         .transition()
                         .duration(200)
                         .attr("r", 15);
                 }
-                drawCorrelationPollutions();
+
             })
             
             .on("mouseover", function(d) {
@@ -410,6 +413,7 @@ function UpdateChart(variable, containerId, stationId) {
             .on("mouseout", function(d) {
                 d3.select("#tooltip").style("opacity", 0);
             });
+            // drawCorrelationPollutions(d.date,d.stationId);
     
     });
 }
@@ -455,28 +459,31 @@ function formatDate(date) {
 function showTimeSeries(date) {
     // Implementa la lógica para mostrar la serie temporal debajo del punto
     console.log("Mostrar serie temporal para la fecha: " + formatDate(date));
+    
 }
 
-function updateOtherCharts(date,stationId) {
+function updateOtherCharts(date, stationId) {
+    // Parsea la fecha si es una cadena
+    var selectedDate = (typeof date === 'string') ? new Date(date) : date;
+
     // Vuelve al tamaño original todos los puntos de todas las gráficas y elimina el borde amarillo
     d3.selectAll(".dot")
-        .attr("r", 3) // Vuelve al tamaño original
-        .style("stroke", null); // Elimina el borde amarillo
-        
+        .attr("r", 3)
+        .style("stroke", null);
 
     // Selecciona todos los puntos con la misma fecha en todas las gráficas y los resalta
     d3.selectAll(".dot")
-        .filter(function(d) { return d.date.getTime() === date.getTime(); })
-        .attr("r", 15) // Amplía el punto
-        .style("stroke", "yellow"); // Agrega un borde amarillo
-        
+        .filter(function(d) {
+            // Asegúrate de que d.date sea un objeto Date
+            var dotDate = (typeof d.date === 'string') ? new Date(d.date) : d.date;
+            return dotDate && dotDate.getTime() === selectedDate.getTime();
+        })
+        .attr("r", 15)
+        .style("stroke", "yellow");
 
     // Implementa la lógica para resaltar la fecha seleccionada en otras gráficas
-    console.log("Actualizar otras gráficas para la fecha: " + formatDate(date));
-    drawCorrelationPollutions(date,stationId);
-
-
-
+    console.log("Actualizar otras gráficas para la fecha: " + formatDate(selectedDate));
+    drawCorrelationPollutions(selectedDate, stationId);
 }
 
 function drawCorrelationPollutions(date, stationId) {
@@ -671,16 +678,23 @@ function updateOtherCharsMeteorogical(date) {
     // Remueve cualquier línea vertical previamente agregada
     d3.selectAll(".highlight-line").remove();
 
+    // Parsea la fecha si es una cadena
+    var selectedDate = (typeof date === 'string') ? new Date(date) : date;
+
     // Selecciona todos los puntos con la misma fecha en todas las gráficas y los resalta
     d3.selectAll(".dot")
-        .filter(function(d) { return d.date.getTime() === date.getTime(); })
+        .filter(function(d) {
+            // Asegúrate de que d.date sea un objeto Date
+            var dotDate = (typeof d.date === 'string') ? new Date(d.date) : d.date;
+            return dotDate && dotDate.getTime() === selectedDate.getTime();
+        })
         .attr("r", 15)
         .style("stroke", "yellow");
 
     // Añade una línea vertical en la fecha seleccionada para identificarla visualmente en los gráficos meteorológicos
     d3.selectAll(".chart").each(function() {
         var svg = d3.select(this).select("svg").select("g");
-        var cx = x(date);
+        var cx = x(selectedDate);
 
         // Agregar la línea vertical
         var line = svg.append("line")
@@ -693,8 +707,7 @@ function updateOtherCharsMeteorogical(date) {
             .style("stroke-width", 2)
             .style("stroke-dasharray", "3, 3")
             .on("click", function() {
-                console.log("Haz clic en la línea para la fecha: " + formatDate(date) );
-                
+                console.log("Haz clic en la línea para la fecha: " + formatDate(selectedDate));
             })
             .on("mouseover", function() {
                 tooltip.style("visibility", "visible");
@@ -702,7 +715,7 @@ function updateOtherCharsMeteorogical(date) {
             .on("mousemove", function() {
                 tooltip.style("left", (d3.event.pageX + 10) + "px")
                        .style("top", (d3.event.pageY - 15) + "px")
-                       .html("Fecha: " + formatDate(date));
+                       .html("Fecha: " + formatDate(selectedDate));
             })
             .on("mouseout", function() {
                 tooltip.style("visibility", "hidden");
@@ -717,12 +730,10 @@ function updateOtherCharsMeteorogical(date) {
             .style("padding", "5px")
             .style("border-radius", "5px")
             .style("visibility", "hidden")
-            .html("Fecha: " + formatDate(date));
-
+            .html("Fecha: " + formatDate(selectedDate));
     });
 
-    console.log("Actualizar otras gráficas para la fecha: " + formatDate(date));
-    
+    console.log("Actualizar otras gráficas para la fecha: " + formatDate(selectedDate));
 }
 
 
@@ -1030,8 +1041,8 @@ svg.call(zoom);
 // Define la proyección para convertir coordenadas GeoJSON a coordenadas de pantalla
 const projection = d3.geoMercator()
     .center([116.4074, 39.9042]) // Centra el mapa en Beijing
-    .scale(12200) // Ajusta la escala para que quepa en el tamaño del mapa
-    .translate([width_MAP / 3.5, height_MAP / 3.2]);
+    .scale(10000) // Ajusta la escala para que quepa en el tamaño del mapa
+    .translate([width_MAP / 3.5, height_MAP / 4]);
 
 // Define el generador de ruta para convertir rutas GeoJSON a rutas SVG
 const path = d3.geoPath().projection(projection);
@@ -1335,14 +1346,17 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
     stations.sort();
 
     // Selección del elemento <select> de estaciones
-    var stationSelect = d3.select("#station");
+    var stationSelect1 = d3.select("#station");
+    var stationSelect2 = d3.select("#station2");
 
-    // Agregar opciones de estación al elemento <select>
-    stationSelect.selectAll("option")
-        .data(stations)
-        .enter().append("option")
-        .attr("value", function(d) { return d; })
-        .text(function(d) { return formatStationName(d); });
+    // Agregar opciones de estación al elemento <select> para ambas estaciones
+    [stationSelect1, stationSelect2].forEach(function(select) {
+        select.selectAll("option")
+            .data(stations)
+            .enter().append("option")
+            .attr("value", function(d) { return d; })
+            .text(function(d) { return formatStationName(d); });
+    });
 
     // Función para formatear el nombre de la estación
     function formatStationName(stationId) {
@@ -1350,8 +1364,9 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
         var formattedName = stationId.charAt(0).toUpperCase() + stationId.slice(1).replace(/_aq$/, "");
         return "Estación " + formattedName;
     }
+
     // Función para dibujar el gráfico de línea
-    function drawLineChart(selectedContaminants, selectedStation, startDate, endDate) {
+    function drawLineChart(selectedContaminants, selectedStation, startDate, endDate, chartId) {
         // Filtrar datos para la estación seleccionada y rango de fechas
         var filteredData = data.filter(function(d) {
             return d.stationId === selectedStation &&
@@ -1362,13 +1377,13 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
         // Configurar dimensiones y márgenes del gráfico
         var margin = { top: 10, right: 70, bottom: 50, left: 20 };
         var width = 690 - margin.left - margin.right;
-        var height = 200 - margin.top - margin.bottom;
+        var height = 180 - margin.top - margin.bottom;
 
         // Remover gráfico anterior si existe
-        d3.select("#chart-for-hour-compare").selectAll("*").remove();
+        d3.select(chartId).selectAll("*").remove();
 
         // Crear el lienzo SVG
-        var svg = d3.select("#chart-for-hour-compare")
+        var svg = d3.select(chartId)
             .append("svg")
             .attr("width", width + margin.left + margin.right)
             .attr("height", height + margin.top + margin.bottom)
@@ -1458,7 +1473,7 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
             .attr("y", 0 - (margin.top / 2))
             .attr("text-anchor", "middle")
             .style("font-size", "16px")
-            // .text("Comparación de Contaminantes en " + formatStationName(selectedStation));
+            // .text("Estacion " + formatStationName(selectedStation));
 
         // Función para asignar colores a cada contaminante
         function contaminantColor(contaminant) {
@@ -1509,7 +1524,8 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
             selectedContaminants.push(this.value);
         });
     
-        var selectedStation = d3.select("#station").node().value;
+        var selectedStation1 = d3.select("#station").node().value;
+        var selectedStation2 = d3.select("#station2").node().value;
         var startDate = null, endDate = null;
     
         // Verificar si se ha seleccionado un rango de fechas
@@ -1520,7 +1536,7 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
             // Agregar un día al inicio del rango de fechas
             startDate.setDate(startDate.getDate() + 1);
             // Disminuir un día al final del rango de fechas
-            endDate.setDate(endDate.getDate()+1);
+            endDate.setDate(endDate.getDate() + 1);
         } else {
             startDate = new Date(d3.select("#specific-date").node().value);
             startDate.setDate(startDate.getDate() + 1); // Restar un día
@@ -1532,8 +1548,10 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
         endDate.setHours(23, 59, 59, 999); // Establecer hora máxima para la fecha de fin
     
         // Llamar a la función para dibujar el gráfico con los parámetros seleccionados
-        drawLineChart(selectedContaminants, selectedStation, startDate, endDate);
+        drawLineChart(selectedContaminants, selectedStation1, startDate, endDate, "#chart-for-hour-compare");
+        drawLineChart(selectedContaminants, selectedStation2, startDate, endDate, "#chart-for-hour-compare2");
     }
+
     // Escuchar cambios en la selección de contaminantes y fechas
     d3.selectAll("input[name='contaminante'], input[name='date-range']").on("change", updateChart);
 
@@ -1556,9 +1574,9 @@ function evolutionEspatialPCA_All(stationId,selectedDate) {
         d3.select(".chart-pca").selectAll("*").remove();
 
         // Configura las dimensiones y márgenes del gráfico
-        const margin = { top: 20, right: 30, bottom: 40, left: 50 },
+        const margin = { top: 10, right: 30, bottom: 40, left: 20 },
               width = 400 - margin.left - margin.right,
-              height = 500 - margin.top - margin.bottom;
+              height = 400 - margin.top - margin.bottom;
 
         // Añade el SVG
         const svg = d3.select(".chart-pca")
@@ -1648,9 +1666,9 @@ function evolutionEspatialPCA_For_Day(stationId, selectedDate) {
         d3.select(".chart-pca").selectAll("*:not(.chart-title)").remove();
 
         // Configura las dimensiones y márgenes del gráfico
-        const margin = { top: 20, right: 30, bottom: 40, left: 50 },
+        const margin = { top: 10, right: 30, bottom: 40, left: 20 },
               width = 400 - margin.left - margin.right,
-              height = 500 - margin.top - margin.bottom;
+              height = 400 - margin.top - margin.bottom;
 
         // Añade el SVG
         const svg = d3.select(".chart-pca")
