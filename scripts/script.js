@@ -1563,10 +1563,10 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
 // ANALISIS DE LA EVOLUCION ESPACIAL, PCA POR ESTACION AL HACER CLICK EN EL MAPA
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // 
-function evolutionEspatialPCA_All(stationId,selectedDate) {
+function evolutionEspatialPCA_All(stationId, selectedDate) {
     console.log("Estacion seleccionada: ", stationId, "PCA");
 
-    d3.csv("data/data_pca_real.csv").then(data => {
+    d3.csv("data/PCA_VIZ_AQI.csv").then(data => {
         // Filtra los datos por stationId
         const filteredData = data.filter(d => d.stationId === stationId);
 
@@ -1602,9 +1602,17 @@ function evolutionEspatialPCA_All(stationId,selectedDate) {
         svg.append("g")
            .call(d3.axisLeft(y));
 
-        // Calcula las distancias al origen y determina el color de cada punto
-        const color = d3.scaleSequential(d3.interpolateBlues)
-                        .domain([0, d3.max(filteredData, d => Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2))]);
+        // Define la escala de colores para el AQI
+        const colorScale = d3.scaleOrdinal()
+                             .domain([1, 2, 3, 4, 5, 6])
+                             .range([
+                                 "rgb(0, 128, 0)",   // Excelente
+                                 "rgb(238,176,9)",   // Bueno
+                                 "rgb(250,145,74)",  // Ligeramente
+                                 "rgb(255, 0, 0)",   // Moderadamente
+                                 "rgb(128, 0, 128)", // Fuerte
+                                 "rgb(165, 42, 42)"  // Severo
+                             ]);
 
         // Añade los puntos
         svg.selectAll("circle")
@@ -1614,46 +1622,22 @@ function evolutionEspatialPCA_All(stationId,selectedDate) {
            .attr("cx", d => x(+d.PC1))
            .attr("cy", d => y(+d.PC2))
            .attr("r", 5)
-           .style("fill", d => color(Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2)));
+           .style("fill", d => colorScale(+d.AQI));
 
         // Añade el tooltip
         const tooltip = d3.select("body").append("div")
                           .attr("class", "tooltip")
                           .style("opacity", 0);
+        // Añadir interactividad al pasar el mouse por los puntos
+
 
         svg.selectAll("circle")
-        //    .on("mouseover", (event, d) => {
-        //        const pc1 = +d.PC1;
-        //        const pc2 = +d.PC2;
-
-        //        // Verifica que pc1 y pc2 sean números válidos
-        //        if (!isNaN(pc1) && !isNaN(pc2)) {
-        //            const xCoord = x(pc1);
-        //            const yCoord = y(pc2);
-
-        //            tooltip.transition()
-        //                   .duration(200)
-        //                   .style("opacity", .9);
-        //            tooltip.html(`Estación: ${d.stationId}<br/>Fecha: ${d.date || 'N/A'} ${d.time || 'N/A'}<br/>Coordenadas: (${xCoord.toFixed(2)}, ${yCoord.toFixed(2)})`)
-        //                   .style("left", (event.pageX + 5) + "px")
-        //                   .style("top", (event.pageY - 28) + "px");
-        //        } else {
-        //            console.error('Error: PC1 o PC2 no son números válidos:', d.PC1, d.PC2);
-        //        }
-        //    })
-        //    .on("mouseout", () => {
-        //        tooltip.transition()
-        //               .duration(500)
-        //               .style("opacity", 0);
-        //    })
            .on("click", (event, d) => {
                console.log("Fecha seleccionada: ", d.date || 'N/A', d.time || 'N/A');
-               evolutionEspatialPCA_For_Day(stationId,selectedDate);
-
+               evolutionEspatialPCA_For_Day(stationId, selectedDate);
            });
     });
 }
-
 
 function evolutionEspatialPCA_For_Day(stationId, selectedDate) {
     console.log("Estacion seleccionada: ", stationId, "Fecha seleccionada: ", selectedDate, "PCA");
@@ -1694,9 +1678,17 @@ function evolutionEspatialPCA_For_Day(stationId, selectedDate) {
         svg.append("g")
            .call(d3.axisLeft(y));
 
-        // Calcula las distancias al origen y determina el color de cada punto
-        const color = d3.scaleSequential(d3.interpolateBlues)
-                        .domain([0, d3.max(filteredData, d => Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2))]);
+        // Define la escala de colores para el AQI
+        const colorScale = d3.scaleOrdinal()
+                             .domain([1, 2, 3, 4, 5, 6])
+                             .range([
+                                 "rgb(0, 128, 0)",   // Excelente
+                                 "rgb(238,176,9)",   // Bueno
+                                 "rgb(250,145,74)",  // Ligeramente
+                                 "rgb(255, 0, 0)",   // Moderadamente
+                                 "rgb(128, 0, 128)", // Fuerte
+                                 "rgb(165, 42, 42)"  // Severo
+                             ]);
 
         // Añade los puntos
         svg.selectAll("circle")
@@ -1706,41 +1698,41 @@ function evolutionEspatialPCA_For_Day(stationId, selectedDate) {
            .attr("cx", d => x(+d.PC1))
            .attr("cy", d => y(+d.PC2))
            .attr("r", 5)
-           .style("fill", d => color(Math.sqrt(d.PC1 * d.PC1 + d.PC2 * d.PC2)))
-           .on("mouseover", (event, d) => {
-               const xCoord = x(+d.PC1);
-               const yCoord = y(+d.PC2);
+           .style("fill", d => colorScale(+d.AQI))
+        //    .on("mouseover", (event, d) => {
+        //        const xCoord = x(+d.PC1);
+        //        const yCoord = y(+d.PC2);
 
-               // Asegúrate de que las coordenadas no sean NaN
-               if (!isNaN(xCoord) && !isNaN(yCoord)) {
-                   tooltip.transition()
-                          .duration(200)
-                          .style("opacity", .9);
-                   tooltip.html(`Estación: ${d.stationId}<br/>Fecha: ${d.date} ${d.time}<br/>Coordenadas: (${xCoord.toFixed(2)}, ${yCoord.toFixed(2)})`)
-                          .style("left", (event.pageX + 5) + "px")
-                          .style("top", (event.pageY - 28) + "px");
-               } else {
-                   console.error('Error: Coordenadas no válidas para el punto', d);
-               }
-           })
-           .on("mouseout", () => {
-               tooltip.transition()
-                      .duration(500)
-                      .style("opacity", 0);
-           })
-           .on("click", (event, d) => {
-               const xCoord = x(+d.PC1);
-               const yCoord = y(+d.PC2);
-            console.log("Fecha seleccionada: ", selectedDate);
-               // Asegúrate de que las coordenadas no sean NaN
-               if (!isNaN(xCoord) && !isNaN(yCoord)) {
-                   console.log("Fecha seleccionada: ", d.date, d.time);
-                   console.log("Coordenadas del punto: ", xCoord.toFixed(2), yCoord.toFixed(2));
-                   console.log("Estación: ", d.stationId);
-               } else {
-                   console.error('Error: Coordenadas no válidas para el punto', d);
-               }
-           });
+        //        // Asegúrate de que las coordenadas no sean NaN
+        //        if (!isNaN(xCoord) && !isNaN(yCoord)) {
+        //            tooltip.transition()
+        //                   .duration(200)
+        //                   .style("opacity", .9);
+        //            tooltip.html(`Estación: ${d.stationId}<br/>Fecha: ${d.date} ${d.time}<br/>Coordenadas: (${xCoord.toFixed(2)}, ${yCoord.toFixed(2)})`)
+        //                   .style("left", (event.pageX + 5) + "px")
+        //                   .style("top", (event.pageY - 28) + "px");
+        //        } else {
+        //            console.error('Error: Coordenadas no válidas para el punto', d);
+        //        }
+        //    })
+        //    .on("mouseout", () => {
+        //        tooltip.transition()
+        //               .duration(500)
+        //               .style("opacity", 0);
+        //    })
+        //    .on("click", (event, d) => {
+        //        const xCoord = x(+d.PC1);
+        //        const yCoord = y(+d.PC2);
+        //        console.log("Fecha seleccionada: ", selectedDate);
+        //        // Asegúrate de que las coordenadas no sean NaN
+        //        if (!isNaN(xCoord) && !isNaN(yCoord)) {
+        //            console.log("Fecha seleccionada: ", d.date, d.time);
+        //            console.log("Coordenadas del punto: ", xCoord.toFixed(2), yCoord.toFixed(2));
+        //            console.log("Estación: ", d.stationId);
+        //        } else {
+        //            console.error('Error: Coordenadas no válidas para el punto', d);
+        //        }
+        //    });
 
         // Añade el tooltip
         const tooltip = d3.select("body").append("div")
