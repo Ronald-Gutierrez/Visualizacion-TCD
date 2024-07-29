@@ -31,11 +31,16 @@ function formatStationId(stationId) {
 //VISUALIZACION DE MI SERIE TEMPORAL DE CONTAMINACION, Y SERIE TEMPORAL POR HORA
 ///////////////////
 function drawAndUpdateChartsPollutionForHour(date, stationId, variable) {
-    // Limpiar el contenedor antes de dibujar el nuevo gráfico
-    d3.select("#chart-hour-pollution").selectAll("*").remove();
-
+    // Seleccionar el contenedor del gráfico
+    var chartContainer = d3.select("#chart-hour-pollution");
+    
+    // Limpiar solo el contenido del gráfico, pero no el título
+    chartContainer.select("svg").remove();
+    var width = 800;
+    var height = 50;
+    var margin = { top: 10, right: 20, bottom: 30, left: 40 };
     // Crear el nuevo SVG para el gráfico por hora
-    var svg = d3.select("#chart-hour-pollution").append("svg")
+    var svg = chartContainer.append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
@@ -88,9 +93,9 @@ function drawAndUpdateChartsPollutionForHour(date, stationId, variable) {
         svg.append("g")
             .attr("class", "y axis")
             .call(d3.axisLeft(yHour).ticks(7));
-
     });
 }
+
 var currentStationId = "yufa_aq"; // Variable global para almacenar la estación actual
 
 
@@ -214,6 +219,7 @@ function drawChart(variable, containerId, stationId) {
     });
     
     function updateHourlyChartForStation(selectedRange, stationId, variable) {
+        
         d3.csv("data/hour_beijing_17_18_aq.csv").then(function(hourlyData) {
             // Filtrar datos para la estación seleccionada
             hourlyData = hourlyData.filter(function(d) {
@@ -242,38 +248,38 @@ function drawChart(variable, containerId, stationId) {
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
             
             // Escala temporal para el gráfico por hora
-            var xHour = d3.scaleTime()
-                .range([0, width])
-                .domain(d3.extent(filteredData, function(d) { return d.date; })).nice();
-    
-            // Escala lineal para el eje Y
-            var yHour = d3.scaleLinear()
-                .range([height, 0])
-                .domain([0, d3.max(filteredData, function(d) { return d[variable]; })]).nice();
-    
-            // Línea de la serie temporal por hora
-            var line = d3.line()
-                .x(function(d) { return xHour(d.date); })
-                .y(function(d) { return yHour(d[variable]); });
+        var xHour = d3.scaleTime()
+            .range([0, width])
+            .domain(d3.extent(filteredData, function(d) { return d.date; })).nice();
 
-            // Añadir la línea al gráfico
-            svg.append("path")
-                .datum(filteredData)
-                .attr("class", "line")
-                .attr("d", line)
-                .style("fill", "none")
-                .style("stroke", "steelblue")
-                .style("stroke-width", 1.5);
-    
-            // Ejes
-            svg.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + height + ")")
-                .call(d3.axisBottom(xHour).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")));
-    
-            svg.append("g")
-                .attr("class", "y axis")
-                .call(d3.axisLeft(yHour).ticks(7));
+        // Escala lineal para el eje Y
+        var yHour = d3.scaleLinear()
+            .range([height, 0])
+            .domain([0, d3.max(filteredData, function(d) { return d[variable]; })]).nice();
+
+        // Línea de la serie temporal por hora
+        var line = d3.line()
+            .x(function(d) { return xHour(d.date); })
+            .y(function(d) { return yHour(d[variable]); });
+
+        // Añadir la línea al gráfico
+        svg.append("path")
+            .datum(filteredData)
+            .attr("class", "line")
+            .attr("d", line)
+            .style("fill", "none")
+            .style("stroke", "steelblue")
+            .style("stroke-width", 1.5);
+
+        // Ejes
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(d3.axisBottom(xHour).tickFormat(d3.timeFormat("%Y-%m-%d %H:%M:%S")));
+
+        svg.append("g")
+            .attr("class", "y axis")
+            .call(d3.axisLeft(yHour).ticks(7));
             
         });
     }
@@ -1548,6 +1554,7 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
         endDate.setHours(23, 59, 59, 999); // Establecer hora máxima para la fecha de fin
     
         // Llamar a la función para dibujar el gráfico con los parámetros seleccionados
+        
         drawLineChart(selectedContaminants, selectedStation1, startDate, endDate, "#chart-for-hour-compare");
         drawLineChart(selectedContaminants, selectedStation2, startDate, endDate, "#chart-for-hour-compare2");
     }
