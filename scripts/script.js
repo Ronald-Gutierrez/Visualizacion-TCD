@@ -1980,7 +1980,7 @@ function evolutionEspatialPCA_All(stationId, selectedDate) {
                })
                .on("click", function(event, d) {
                    console.log("Fecha seleccionada: ", d.date || 'N/A', d.time || 'N/A');
-                   evolutionEspatialPCA_For_Day(stationId, d.date);
+                //    evolutionEspatialPCA_For_Day(stationId, d.date);
                });
         }
 
