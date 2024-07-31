@@ -17,3 +17,38 @@
 }
 
 
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.container {
+  height: 100vh;
+  overflow-y: auto;
+}
+
+#map {
+  height: 70vh; /* Ajusta según sea necesario */
+  overflow: hidden;
+}
+
+.chart-container {
+  height: 30vh; /* Ajusta según sea necesario */
+  overflow-y: auto;
+  position: relative;
+}
+/*  */
+
+#legend-container2 {
+  margin-bottom: -60px;
+  margin-top: -25px;
+  margin-left: 609px;
+}
+#legend-container3 {
+  margin-top: 15px;
+}
+.pca-filters {
+  margin-top: -20px;
+}

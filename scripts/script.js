@@ -1,5 +1,5 @@
 var margin = { top: 50, right: 20, bottom: 34, left: 80 },
-    width = 880 - margin.left - margin.right,
+    width = 1000 - margin.left - margin.right,
     height = 150 - margin.top - margin.bottom;
 
 var x = d3.scaleTime().range([0, width]);
@@ -8,6 +8,7 @@ var y = d3.scaleLinear().range([height, 0]);
 var color = d3.scaleOrdinal()
     .domain([1, 2, 3, 4, 5, 6])
     .range(["rgb(0, 128, 0)", "rgb(238,176,9)", "rgb(250,145,74)", "rgb(255, 0, 0)", "rgb(128, 0, 128)", "rgb(165, 42, 42)"]);
+    
 
 var legendData = [
     { color: "rgb(0, 128, 0)", label: "Excelente" },
@@ -36,7 +37,7 @@ function drawAndUpdateChartsPollutionForHour(date, stationId, variable) {
     
     // Limpiar solo el contenido del gráfico, pero no el título
     chartContainer.select("svg").remove();
-    var width = 800;
+    var width = 750;
     var height = 50;
     var margin = { top: 10, right: 20, bottom: 30, left: 40 };
     // Crear el nuevo SVG para el gráfico por hora
@@ -95,7 +96,105 @@ function drawAndUpdateChartsPollutionForHour(date, stationId, variable) {
             .call(d3.axisLeft(yHour).ticks(7));
     });
 }
+// Definir las estaciones y sus colores (fuera de cualquier función)
+var seasons = [
+    { name: "Primavera", color: "#d0f0c0" },
+    { name: "Verano", color: "#f0e68c" },
+    { name: "Otoño", color: "#f4a460" },
+    { name: "Invierno", color: "#add8e6" }
+];
+function drawSeasonLegendpollution() {
+    var legendWidth = 600;
+    var legendHeight = 50;
 
+    // Eliminar cualquier SVG existente en el contenedor de la leyenda
+    d3.select("#legend-container3").selectAll("svg").remove();
+
+    var legend = d3.select("#legend-container3")
+        .append("svg")
+        .attr("width", legendWidth)
+        .attr("height", legendHeight)
+        // .style("background-color", "#f9f9f9")
+        // .style("border", "1px solid #ccc")
+        .append("g")
+        .attr("transform", "translate(10,10)");
+
+    var legendItems = legend.selectAll(".legend-item")
+        .data(legendData)
+        .enter().append("g")
+        .attr("class", "legend-item")
+        .attr("transform", function(d, i) { return "translate(" + (i * 100) + ", 0)"; });
+
+    legendItems.append("rect")
+        .attr("width",100)
+        .attr("height", 18)
+        .style("fill", function(d) { return d.color; });
+
+        legendItems.append("text")
+        .attr("x", 1)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "start")
+        .style("font-size", "13px")
+        .style("fill", "black")
+        .style("font-weight", "bold") // Añade esta línea para hacer las letras más gruesas
+        .text(function(d) { return d.label; });
+    console.log("Leyenda dibujada");
+}
+
+// Asegúrate de llamar a esta función cuando se cargue la página
+document.addEventListener("DOMContentLoaded", function() {
+    drawSeasonLegendpollution();
+    // Aquí puedes llamar a tus otras funciones para dibujar gráficos
+});
+function drawSeasonLegend() {
+    var legendWidth = 400;
+    var legendHeight = 50;
+
+    // Eliminar cualquier SVG existente en el contenedor de la leyenda
+    d3.select("#legend-containe2").selectAll("svg").remove();
+
+    // Definir una nueva altura más pequeña
+    var legendHeight = 40; // Puedes ajustar este valor según tus necesidades
+
+    var legend = d3.select("#legend-container2")
+        .append("svg")
+        .attr("width", legendWidth)
+        .attr("height", legendHeight) // Usar la nueva altura
+        .style("background-color", "#f9f9f9") // Cambiar a un color gris (plomo)
+        .append("g")
+        .attr("transform", "translate(10,10)");
+
+    var legendItems = legend.selectAll(".legend-item")
+        .data(seasons)
+        .enter().append("g")
+        .attr("class", "legend-item")
+        .attr("transform", function(d, i) { return "translate(" + (i * 100) + ", 0)"; });
+
+    legendItems.append("rect")
+        .attr("width", 18)
+        .attr("height", 18)
+        .style("fill", function(d) { return d.color; })
+        .style("opacity", 0.3);
+
+    legendItems.append("text")
+        .attr("x", 24)
+        .attr("y", 9)
+        .attr("dy", ".35em")
+        .style("text-anchor", "start")
+        .style("fill", "black")
+        .style("font-weight", "bold") // Añade esta línea para hacer las letras más gruesas
+        .style("font-size", "12px")
+        .text(function(d) { return d.name; });
+
+    console.log("Leyenda dibujada");
+}
+
+// Al inicio de tu script principal
+document.addEventListener("DOMContentLoaded", function() {
+    drawSeasonLegend();
+    // Aquí puedes llamar a tus otras funciones para dibujar gráficos
+});
 var currentStationId = "yufa_aq"; // Variable global para almacenar la estación actual
 
 
@@ -106,6 +205,9 @@ function drawChart(variable, containerId, stationId) {
       .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+    // Definir las estaciones y sus colores
+
+    
     svg.append("text")
         .attr("x", -70)
         .attr("y", 30)
@@ -129,8 +231,12 @@ function drawChart(variable, containerId, stationId) {
             d[variable] = +d[variable];
         });
 
+        // Definir escalas x e y
         x.domain(d3.extent(data, function(d) { return d.date; })).nice();
         y.domain([0, d3.max(data, function(d) { return d[variable]; })]);
+
+        // Añadir el fondo de estaciones
+        addSeasonalBackground(svg, x, height);
 
         svg.append("g")
             .attr("class", "x axis")
@@ -171,7 +277,7 @@ function drawChart(variable, containerId, stationId) {
             .enter()
             .append("circle")
             .attr("class", "dot")
-            .attr("r", 3)
+            .attr("r", 2.5)
             .attr("cx", function(d) { return x(d.date); })
             .attr("cy", function(d) { return y(d[variable]); })
             .style("fill", function(d) { return color(d[variable]); })
@@ -283,6 +389,47 @@ function drawChart(variable, containerId, stationId) {
             
         });
     }
+    function addSeasonalBackground(svg, xScale, height) {
+        var seasons = [
+            { name: "Primavera", start: "03-20", end: "06-21", color: "#d0f0c0" },
+            { name: "Verano", start: "06-21", end: "09-22", color: "#f0e68c" },
+            { name: "Otoño", start: "09-22", end: "12-21", color: "#f4a460" },
+            { name: "Invierno", start: "12-21", end: "12-31", color: "#add8e6" },
+            { name: "Invierno", start: "12-31", end: "03-20", color: "#add8e6" }
+        ];
+    
+        var yearRange = xScale.domain();
+        var startYear = yearRange[0].getFullYear();
+        var endYear = yearRange[1].getFullYear();
+    
+        for (var year = startYear; year <= endYear; year++) {
+            seasons.forEach(function(season) {
+                var startDate = new Date(year + "-" + season.start);
+                var endDate = new Date(year + "-" + season.end);
+    
+                // Ajuste para el invierno que cruza el año
+                if (season.name === "Invierno") {
+                    if (startDate > endDate) {
+                        endDate.setFullYear(year + 1);
+                    } else {
+                        startDate.setFullYear(year - 1);
+                    }
+                }
+    
+                // Solo dibuja si las fechas están dentro del rango del gráfico
+                if (startDate <= yearRange[1] && endDate >= yearRange[0]) {
+                    svg.append("rect")
+                        .attr("x", xScale(Math.max(startDate, yearRange[0])))
+                        .attr("y", 0)
+                        .attr("width", xScale(Math.min(endDate, yearRange[1])) - xScale(Math.max(startDate, yearRange[0])))
+                        .attr("height", height)
+                        .attr("fill", season.color)
+                        .attr("opacity", 0.3);
+                }
+            });
+        }
+    }
+    
 }
 
 
@@ -565,7 +712,7 @@ function renderCorrelationMatrix(matrix, pollutants, container) {
         .domain([-1, 1]);
 
     // Configurar el tamaño de la celda y el margen
-    var cellSize = 28;
+    var cellSize = 45;
     var margin = { top: 40, right: 20, bottom: 20, left: 45 }; // Aumentar margen para los nombres
 
     // Calcular el tamaño del contenedor
@@ -674,6 +821,16 @@ var weatherAttributes = ["temperature", "pressure", "humidity", "wind_direction"
 weatherAttributes.forEach(function(attribute) {
     drawWeatherChart(attribute, "chart-" + attribute);
 });
+function translateWeatherAttribute(attribute) {
+    var translations = {
+        "temperature": "Temperatura",
+        "pressure": "Presión",
+        "humidity": "Humedad",
+        "wind_direction": "Dirección del Viento",
+        "wind_speed": "Velocidad del Viento"
+    };
+    return translations[attribute] || attribute;
+}
 
 function updateOtherCharsMeteorogical(date) {
     // Vuelve al tamaño original todos los puntos de todas las gráficas y elimina el borde amarillo
@@ -738,6 +895,46 @@ function updateOtherCharsMeteorogical(date) {
             .style("visibility", "hidden")
             .html("Fecha: " + formatDate(selectedDate));
     });
+    function addSeasonalBackground(svg, xScale, height) {
+        var seasons = [
+            { name: "Primavera", start: "03-20", end: "06-21", color: "#d0f0c0" },
+            { name: "Verano", start: "06-21", end: "09-22", color: "#f0e68c" },
+            { name: "Otoño", start: "09-22", end: "12-21", color: "#f4a460" },
+            { name: "Invierno", start: "12-21", end: "12-31", color: "#add8e6" },
+            { name: "Invierno", start: "12-31", end: "03-20", color: "#add8e6" }
+        ];
+    
+        var yearRange = xScale.domain();
+        var startYear = yearRange[0].getFullYear();
+        var endYear = yearRange[1].getFullYear();
+    
+        for (var year = startYear; year <= endYear; year++) {
+            seasons.forEach(function(season) {
+                var startDate = new Date(year + "-" + season.start);
+                var endDate = new Date(year + "-" + season.end);
+    
+                // Ajuste para el invierno que cruza el año
+                if (season.name === "Invierno") {
+                    if (startDate > endDate) {
+                        endDate.setFullYear(year + 1);
+                    } else {
+                        startDate.setFullYear(year - 1);
+                    }
+                }
+    
+                // Solo dibuja si las fechas están dentro del rango del gráfico
+                if (startDate <= yearRange[1] && endDate >= yearRange[0]) {
+                    svg.append("rect")
+                        .attr("x", xScale(Math.max(startDate, yearRange[0])))
+                        .attr("y", 0)
+                        .attr("width", xScale(Math.min(endDate, yearRange[1])) - xScale(Math.max(startDate, yearRange[0])))
+                        .attr("height", height)
+                        .attr("fill", season.color)
+                        .attr("opacity", 0.3);
+                }
+            });
+        }
+    }
 
     console.log("Actualizar otras gráficas para la fecha: " + formatDate(selectedDate));
 }
@@ -762,7 +959,8 @@ function drawWeatherChart(attribute, containerId,stationId) {
         .attr("y", 0 - (margin.top / 2))
         .attr("text-anchor", "start")
         .style("font-size", "16px")
-        .text(attribute);
+        .text(translateWeatherAttribute(attribute));
+
 
     // Cargar los datos iniciales para la estación miyun_meo
     d3.csv("data/daily_meo_output.csv").then(function(data) {
@@ -782,6 +980,48 @@ function drawWeatherChart(attribute, containerId,stationId) {
         } else {
             y.domain(d3.extent(data, function(d) { return d[attribute]; })).nice();
         }
+        function addSeasonalBackground(svg, xScale, height) {
+            var seasons = [
+                { name: "Primavera", start: "03-20", end: "06-21", color: "#d0f0c0" },
+                { name: "Verano", start: "06-21", end: "09-22", color: "#f0e68c" },
+                { name: "Otoño", start: "09-22", end: "12-21", color: "#f4a460" },
+                { name: "Invierno", start: "12-21", end: "12-31", color: "#add8e6" },
+                { name: "Invierno", start: "12-31", end: "03-20", color: "#add8e6" }
+            ];
+        
+            var yearRange = xScale.domain();
+            var startYear = yearRange[0].getFullYear();
+            var endYear = yearRange[1].getFullYear();
+        
+            for (var year = startYear; year <= endYear; year++) {
+                seasons.forEach(function(season) {
+                    var startDate = new Date(year + "-" + season.start);
+                    var endDate = new Date(year + "-" + season.end);
+        
+                    // Ajuste para el invierno que cruza el año
+                    if (season.name === "Invierno") {
+                        if (startDate > endDate) {
+                            endDate.setFullYear(year + 1);
+                        } else {
+                            startDate.setFullYear(year - 1);
+                        }
+                    }
+        
+                    // Solo dibuja si las fechas están dentro del rango del gráfico
+                    if (startDate <= yearRange[1] && endDate >= yearRange[0]) {
+                        svg.append("rect")
+                            .attr("x", xScale(Math.max(startDate, yearRange[0])))
+                            .attr("y", 0)
+                            .attr("width", xScale(Math.min(endDate, yearRange[1])) - xScale(Math.max(startDate, yearRange[0])))
+                            .attr("height", height)
+                            .attr("fill", season.color)
+                            .attr("opacity", 0.3);
+                    }
+                });
+            }
+        }
+        addSeasonalBackground(svg, x, height);
+
 
         svg.append("g")
             .attr("class", "x axis")
@@ -862,7 +1102,7 @@ function drawHourChart(data, attribute) {
     // Limpiar el contenedor antes de dibujar el nuevo gráfico
     d3.select("#chart-hour-meteorological").select("svg").remove();
     var margin = { top: 20, right: 20, bottom: 30, left: 50 };
-    var width = 900 - margin.left - margin.right;
+    var width = 820 - margin.left - margin.right;
     var height = 100 - margin.top - margin.bottom;
 
     var svg = d3.select("#chart-hour-meteorological")
@@ -1048,7 +1288,7 @@ svg.call(zoom);
 const projection = d3.geoMercator()
     .center([116.4074, 39.9042]) // Centra el mapa en Beijing
     .scale(10000) // Ajusta la escala para que quepa en el tamaño del mapa
-    .translate([width_MAP / 3.5, height_MAP / 4]);
+    .translate([width_MAP / 4.5, height_MAP / 4]);
 
 // Define el generador de ruta para convertir rutas GeoJSON a rutas SVG
 const path = d3.geoPath().projection(projection);
@@ -1077,168 +1317,238 @@ d3.json("map/beijing.json")
     })
     .catch(error => console.error('Error cargando o parseando los datos:', error));
 
-    function updateMapWithDate(selectedDate, stationData) {
-        // Carga los datos de AQI general por día
-        d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
-            // Filtra los datos de AQI para la fecha seleccionada
-            var filteredData = aqiData.filter(function(d) {
-                return d.date === selectedDate;
-            });
-    
-            // Crea un objeto para mapear AQI a colores
-            var aqiColorScale = d3.scaleOrdinal()
-                .domain([1, 2, 3, 4, 5, 6])
-                .range(["rgb(0, 128, 0)", "rgb(238, 176, 9)", "rgb(250, 145, 74)", 
-                        "rgb(255, 0, 0)", "rgb(128, 0, 128)", "rgb(165, 42, 42)"]);
-    
-            // Actualiza las formas en el mapa con los nuevos datos de AQI
-            g.selectAll(".station-shape")
-                .data(stationData)
-                .join("path")
-                .attr("class", "station-shape")
-                .attr("transform", function(d) {
-                    return `translate(${projection([+d.longitude, +d.latitude])})`; // Transforma según la proyección
-                })
-                .attr("d", function(d) {
-                    // Define diferentes formas según la nota
-                    switch (d.Notes) {
-                        case "Urban":
-                            return d3.symbol().type(d3.symbolSquare)();
-                        case "Cross Reference":
-                            return d3.symbol().type(d3.symbolDiamond)();
-                        case "Rural":
-                            return d3.symbol().type(d3.symbolCircle)();
-                        case "Traffic":
-                            return d3.symbol().type(d3.symbolTriangle)();
-                        default:
-                            return d3.symbol().type(d3.symbolStar)();
+function updateMapWithDate(selectedDate, stationData) {
+    // Crear un tooltip local para esta función
+    var tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip") // Usa la clase 'tooltip' para aplicar los estilos
+        .style("position", "absolute")
+        .style("background-color", "rgba(0, 0, 0, 0.8)")
+        .style("color", "white")
+        .style("padding", "5px")
+        .style("border-radius", "5px")
+        .style("pointer-events", "none")
+        .style("opacity", 0);
+
+    // Carga los datos de AQI general por día
+    d3.csv("data/aqi_general_for_day.csv").then(function(aqiData) {
+        // Filtra los datos de AQI para la fecha seleccionada
+        var filteredData = aqiData.filter(function(d) {
+            return d.date === selectedDate;
+        });
+
+        // Crea un objeto para mapear AQI a colores
+        var aqiColorScale = d3.scaleOrdinal()
+            .domain([1, 2, 3, 4, 5, 6])
+            .range(["rgb(0, 128, 0)", "rgb(238, 176, 9)", "rgb(250, 145, 74)", 
+                    "rgb(255, 0, 0)", "rgb(128, 0, 128)", "rgb(165, 42, 42)"]);
+
+        var activeTooltip = null;
+        var activeStationId = null;
+
+        // ... (resto del código)
+
+        // Actualiza las formas en el mapa con los nuevos datos de AQI
+        g.selectAll(".station-shape")
+            .data(stationData)
+            .join("path")
+            .attr("class", "station-shape")
+            .attr("transform", function(d) {
+                return `translate(${projection([+d.longitude, +d.latitude])})`; // Transforma según la proyección
+            })
+            .attr("d", function(d) {
+                // Define diferentes formas según la nota
+                switch (d.Notes) {
+                    case "Urban":
+                        return d3.symbol().type(d3.symbolSquare)();
+                    case "Cross Reference":
+                        return d3.symbol().type(d3.symbolDiamond)();
+                    case "Rural":
+                        return d3.symbol().type(d3.symbolCircle)();
+                    case "Traffic":
+                        return d3.symbol().type(d3.symbolTriangle)();
+                    default:
+                        return d3.symbol().type(d3.symbolStar)();
+                }
+            })
+            .attr("fill", function(d) {
+                // Obtén el AQI para esta estación en la fecha seleccionada
+                var aqiValue = filteredData.find(function(aqi) {
+                    return aqi.stationId === d.stationId;
+                }).AQI_general;
+                // Devuelve el color correspondiente según el AQI
+                return aqiColorScale(aqiValue);
+            })
+            .attr("stroke", "#000")
+            .attr("stroke-width", 1)
+            .style("opacity", 0.8)
+            .on("mouseover", function(d) {
+                var stationId = d.stationId; // Obtén el station_id desde los datos
+                var formattedId = formatStationId(stationId);
+
+                // Muestra el tooltip
+                tooltip
+                    .style("left", (d3.event.pageX + 10) + "px")
+                    .style("top", (d3.event.pageY - 20) + "px")
+                    .style("opacity", 0.9)
+                    .html("Estación de AQ: " + formattedId + "<br/>" +
+                        "Área: " + d.Notes + "<br/>" +
+                        "AQI: " + filteredData.find(function(aqi) {
+                            return aqi.stationId === stationId;
+                        }).AQI_general);
+            })
+            .on("mouseout", function() {
+                // Oculta el tooltip al quitar el mouse si no está activo
+                if (!activeTooltip) {
+                    tooltip.style("opacity", 0);
+                }
+
+            })     
+
+            .on("click", function(d) {
+                var stationId = d.stationId;
+                console.log("Haz clic en la estación AQI:", stationId);
+
+                // Comprobar si el tooltip ya está activo para esta estación
+                if (activeStationId === stationId) {
+                    // Si es la misma estación, desactivar el tooltip
+                    if (activeTooltip) {
+                        activeTooltip.style("opacity", 0);
+                        activeTooltip = null;
                     }
-                })
-                .attr("fill", function(d) {
-                    // Obtén el AQI para esta estación en la fecha seleccionada
-                    var aqiValue = filteredData.find(function(aqi) {
-                        return aqi.stationId === d.stationId;
-                    }).AQI_general;
-                    // Devuelve el color correspondiente según el AQI
-                    return aqiColorScale(aqiValue);
-                })
-                .attr("stroke", "#000")
-                .attr("stroke-width", 1)
-                .style("opacity", 0.8)
-                .on("mouseover", function(d) {
-                    var stationId = d.stationId; // Obtén el station_id desde los datos
+                    activeStationId = null;
+                } else {
+                    // Si es una estación diferente o no hay tooltip activo, mostrar el tooltip
                     var formattedId = formatStationId(stationId);
-                    
-                    // Muestra el tooltip
-                    d3.select("#tooltip")
+                    if (activeTooltip) {
+                        activeTooltip.style("opacity", 0);
+                    }
+                    activeTooltip = tooltip
                         .style("left", (d3.event.pageX + 10) + "px")
                         .style("top", (d3.event.pageY - 20) + "px")
                         .style("opacity", 0.9)
                         .html("Estación de AQ: " + formattedId + "<br/>" +
-                            "Area: "+ d.Notes+"<br/>" +
-                            "AQI: " + filteredData.find(function(aqi) {
-                                return aqi.stationId === stationId;
-                            }).AQI_general);
-                })
-                .on("mouseout", function() {
-                    // Oculta el tooltip al quitar el mouse
-                    d3.select("#tooltip").style("opacity", 0);
-                })     
-                .on("click", function(d) {
-                    var stationId = d.stationId;
-                    console.log("Haz clic en la estación AQI:", stationId);
-                    updateChartsForStation(stationId); // Actualiza gráficos con la nueva estación
-                    evolutionEspatialPCA_All(stationId,selectedDate);
-                    
-                });
-    
-        }).catch(function(error) {
-            console.log("Error al cargar los datos de AQI CSV:", error); // Maneja errores de carga de datos de AQI
-        });
-    }
-    function updateMapWithDateMeteorological(selectedDate) {
-        // Eliminar todas las flechas existentes antes de cargar las nuevas
-        g.selectAll(".wind-arrow-group").remove();
-    
-        // Carga los datos de velocidad y dirección del viento por día
-        d3.csv("data/speed_wind_weather_for_day.csv").then(function(windData) {
-            // Filtra los datos de viento para la fecha seleccionada
-            var filteredWindData = windData.filter(function(d) {
-                return d.date === selectedDate;
+                                "Área: " + d.Notes + "<br/>" +
+                                "AQI: " + filteredData.find(function(aqi) {
+                                    return aqi.stationId === stationId;
+                                }).AQI_general);
+                    activeStationId = stationId;
+                }
+
+                updateChartsForStation(stationId); // Actualiza gráficos con la nueva estación
+                evolutionEspatialPCA_All(stationId, selectedDate);
+                updateComparisonChartSelection(stationId);
             });
+
+    }).catch(function(error) {
+        console.log("Error al cargar los datos de AQI CSV:", error); // Maneja errores de carga de datos de AQI
+    });
+}
     
-            // Escala para ajustar el tamaño de la flecha según la velocidad del viento
-            var windScale = d3.scaleLinear()
-                .domain([0, d3.max(filteredWindData, function(d) { return +d.wind_speed; })])
-                .range([5, 25]); // Rango de tamaños de flecha
     
-            // Crear un grupo para cada estación de monitoreo
-            var windArrows = g.selectAll(".wind-arrow-group")
-                .data(filteredWindData)
-                .join("g")
-                .attr("class", "wind-arrow-group")
-                .attr("transform", function(d) {
-                    var coords = projection([+d.longitude, +d.latitude]);
-                    return `translate(${coords[0]}, ${coords[1]}) rotate(${d.wind_direction})`;
-                });
-    
-            // Añadir la línea de la flecha
-            windArrows.append("line")
-                .attr("class", "wind-arrow-line")
-                .attr("x1", 0)
-                .attr("y1", 0)
-                .attr("x2", 0)
-                .attr("y2", function(d) {
-                    return -windScale(d.wind_speed); // Longitud de la línea escalada según la velocidad
-                })
-                .attr("stroke", "#ff0000")  // Color rojo
-                .attr("stroke-width", function(d) {
-                    return windScale(d.wind_speed) / 5; // Ancho de la línea escalado
-                });
-                
-    
-            // Añadir el triángulo de la punta de la flecha
-            windArrows.append("polygon")
-                .attr("class", "wind-arrow-head")
-                .attr("points", function(d) {
-                    var headSize = windScale(d.wind_speed) + 2; // Tamaño de la cabeza escalado
-                    return `0,-${headSize} 5,-${headSize - 5} -5,-${headSize - 5}`;
-                })
-                .attr("fill", "#ff0000");  // Color rojo
-                
-    
-            // Eventos del mouse para mostrar el tooltip
-            windArrows
-                .on("mouseover", function(d) {
-                    // Mostrar el tooltip con la dirección y velocidad del viento para ese día
-                    d3.select("#tooltip")
-                        .style("left", (d3.pageX + 10) + "px")
-                        .style("top", (d3.pageY - 20) + "px")
-                        .style("opacity", 0.9)
-                        .html("Dirección del Viento: " + d.wind_direction + "°<br/>" +
-                              "Velocidad del Viento: " + d.wind_speed + " m/s" +"°<br/>" +
-                                "Clima: " + d.weather);
-                })
-                
-                .on("mouseout", function() {
-                    // Ocultar el tooltip al quitar el mouse
-                    d3.select("#tooltip").style("opacity", 0);
-                });
-        }).catch(function(error) {
-            console.log("Error al cargar los datos de viento CSV:", error); // Maneja errores de carga de datos de viento
+
+function updateMapWithDateMeteorological(selectedDate) {
+    // Eliminar todas las flechas existentes antes de cargar las nuevas
+    g.selectAll(".wind-arrow-group").remove();
+
+    // Carga los datos de velocidad y dirección del viento por día
+    d3.csv("data/speed_wind_weather_for_day.csv").then(function(windData) {
+        // Filtra los datos de viento para la fecha seleccionada
+        var filteredWindData = windData.filter(function(d) {
+            return d.date === selectedDate;
         });
-    }
+
+        // Escala para ajustar el tamaño de la flecha según la velocidad del viento
+        var windScale = d3.scaleLinear()
+            .domain([0, d3.max(filteredWindData, function(d) { return +d.wind_speed; })])
+            .range([5, 25]); // Rango de tamaños de flecha
+
+        // Crear un grupo para cada estación de monitoreo
+        var windArrows = g.selectAll(".wind-arrow-group")
+            .data(filteredWindData)
+            .join("g")
+            .attr("class", "wind-arrow-group")
+            .attr("transform", function(d) {
+                var coords = projection([+d.longitude, +d.latitude]);
+                return `translate(${coords[0]}, ${coords[1]}) rotate(${d.wind_direction})`;
+            });
+
+        // Añadir la línea de la flecha
+        windArrows.append("line")
+            .attr("class", "wind-arrow-line")
+            .attr("x1", 0)
+            .attr("y1", 0)
+            .attr("x2", 0)
+            .attr("y2", function(d) {
+                return -windScale(d.wind_speed); // Longitud de la línea escalada según la velocidad
+            })
+            .attr("stroke", "#ff0000")  // Color rojo
+            .attr("stroke-width", function(d) {
+                return windScale(d.wind_speed) / 5; // Ancho de la línea escalado
+            });
+            
+
+        // Añadir el triángulo de la punta de la flecha
+        windArrows.append("polygon")
+            .attr("class", "wind-arrow-head")
+            .attr("points", function(d) {
+                var headSize = windScale(d.wind_speed) + 2; // Tamaño de la cabeza escalado
+                return `0,-${headSize} 5,-${headSize - 5} -5,-${headSize - 5}`;
+            })
+            .attr("fill", "#ff0000");  // Color rojo
+            
+
+        // Eventos del mouse para mostrar el tooltip
+        windArrows
+            .on("mouseover", function(d) {
+                // Mostrar el tooltip con la dirección y velocidad del viento para ese día
+                d3.select("#tooltip")
+                    .style("left", (d3.pageX + 10) + "px")
+                    .style("top", (d3.pageY - 20) + "px")
+                    .style("opacity", 0.9)
+                    .html("Dirección del Viento: " + d.wind_direction + "°<br/>" +
+                            "Velocidad del Viento: " + d.wind_speed + " m/s" +"°<br/>" +
+                            "Clima: " + d.weather);
+            })
+            
+            .on("mouseout", function() {
+                // Ocultar el tooltip al quitar el mouse
+                d3.select("#tooltip").style("opacity", 0);
+            });
+    }).catch(function(error) {
+        console.log("Error al cargar los datos de viento CSV:", error); // Maneja errores de carga de datos de viento
+    });
+}
+
     
+var toggle = true; // Variable para alternar entre los selectores
+
+function updateComparisonChartSelection(stationId) {
+    // Determinar cuál selector actualizar
+    var selectorId = toggle ? "#station" : "#station2";
+
+    // Actualizar el selector de estación correspondiente
+    var stationSelect = d3.select(selectorId);
+    stationSelect.property("value", stationId);
+
+    // Disparar el evento de cambio para actualizar el gráfico
+    stationSelect.dispatch("change");
+
+    // Alternar el valor de la variable toggle
+    toggle = !toggle;
+}
     
-    
-    
+
 // Función para obtener una fecha aleatoria dentro del rango disponible en el dataset
 function getRandomDate(data) {
     var dates = data.map(function(d) { return d.date; });
     var randomDate = dates[Math.floor(Math.random() * dates.length)];
     return randomDate;
 }
-
+function getMostPollutedDate(data) {
+    // Asumimos que el AQI más alto indica el día más contaminado
+    var mostPollutedDay = data.reduce((max, d) => (+d.AQI_general > +max.AQI_general) ? d : max);
+    return mostPollutedDay.date;
+}
 // Carga los datos de latitud y longitud de las estaciones de AQ
 d3.csv("data/lat_lon_beijijng_aq.csv").then(function(stationData) {
     // Verifica que los datos se están cargando correctamente
@@ -1565,86 +1875,140 @@ d3.csv("data/hour_beijing_17_18_aq.csv").then(function(data) {
     // Llamar a la función inicialmente con los valores por defecto
     updateChart();
 });
-
+function loadDefaultAnalysis() {
+    var defaultDate = formatDate(new Date()); // Usa la fecha actual como predeterminada
+    evolutionEspatialPCA_All(defaultStation, defaultDate);
+}
+document.addEventListener('DOMContentLoaded', loadDefaultAnalysis);
+// 
 // // // // // // // // // // // // // // // // // // // // // // // // 
 // ANALISIS DE LA EVOLUCION ESPACIAL, PCA POR ESTACION AL HACER CLICK EN EL MAPA
+var defaultStation = "dongsi_aq"; // Cambia esto a la estación que desees como predeterminada
 
 // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // // 
 function evolutionEspatialPCA_All(stationId, selectedDate) {
     console.log("Estacion seleccionada: ", stationId, "PCA");
+    if (!selectedDate) {
+        selectedDate = formatDate(new Date());
+    }
 
     d3.csv("data/PCA_VIZ_AQI.csv").then(data => {
         // Filtra los datos por stationId
-        const filteredData = data.filter(d => d.stationId === stationId);
+        let filteredData = data.filter(d => d.stationId === stationId);
 
-        // Borra cualquier gráfico existente excepto el título
-        d3.select(".chart-pca").selectAll("*").remove();
+        // Función para actualizar el gráfico
+        function updateChart() {
+            const filterType = d3.select("#filter-type").node().value;
+            if (filterType === "day") {
+                const selectedDay = d3.select("#day-filter").node().value;
+                filteredData = data.filter(d => d.stationId === stationId && d.date === selectedDay);
+            } else if (filterType === "month") {
+                const selectedMonth = d3.select("#month-filter").node().value;
+                filteredData = data.filter(d => {
+                    const dateParts = d.date.split('-');
+                    return d.stationId === stationId && dateParts[1] === selectedMonth;
+                });
+            } else {
+                filteredData = data.filter(d => d.stationId === stationId);
+            }
 
-        // Configura las dimensiones y márgenes del gráfico
-        const margin = { top: 10, right: 30, bottom: 40, left: 20 },
-              width = 400 - margin.left - margin.right,
-              height = 400 - margin.top - margin.bottom;
+            // Borra cualquier gráfico existente
+            d3.select(".chart-pca").selectAll("*").remove();
 
-        // Añade el SVG
-        const svg = d3.select(".chart-pca")
-                      .append("svg")
-                      .attr("width", width + margin.left + margin.right)
-                      .attr("height", height + margin.top + margin.bottom)
-                      .append("g")
-                      .attr("transform", `translate(${margin.left},${margin.top})`);
+            // Configura las dimensiones y márgenes del gráfico
+            const margin = { top: 10, right: 30, bottom: 40, left: 20 },
+                  width = 400 - margin.left - margin.right,
+                  height = 400 - margin.top - margin.bottom;
 
-        // Configura los ejes
-        const x = d3.scaleLinear()
-                    .domain(d3.extent(filteredData, d => +d.PC1))
-                    .range([0, width]);
+            // Añade el SVG
+            const svg = d3.select(".chart-pca")
+                          .append("svg")
+                          .attr("width", width + margin.left + margin.right)
+                          .attr("height", height + margin.top + margin.bottom)
+                          .append("g")
+                          .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        const y = d3.scaleLinear()
-                    .domain(d3.extent(filteredData, d => +d.PC2))
-                    .range([height, 0]);
+            // Configura los ejes
+            const x = d3.scaleLinear()
+                        .domain(d3.extent(filteredData, d => +d.PC1))
+                        .range([0, width]);
 
-        svg.append("g")
-           .attr("transform", `translate(0,${height})`)
-           .call(d3.axisBottom(x));
+            const y = d3.scaleLinear()
+                        .domain(d3.extent(filteredData, d => +d.PC2))
+                        .range([height, 0]);
 
-        svg.append("g")
-           .call(d3.axisLeft(y));
+            svg.append("g")
+               .attr("transform", `translate(0,${height})`)
+               .call(d3.axisBottom(x));
 
-        // Define la escala de colores para el AQI
-        const colorScale = d3.scaleOrdinal()
-                             .domain([1, 2, 3, 4, 5, 6])
-                             .range([
-                                 "rgb(0, 128, 0)",   // Excelente
-                                 "rgb(238,176,9)",   // Bueno
-                                 "rgb(250,145,74)",  // Ligeramente
-                                 "rgb(255, 0, 0)",   // Moderadamente
-                                 "rgb(128, 0, 128)", // Fuerte
-                                 "rgb(165, 42, 42)"  // Severo
-                             ]);
+            svg.append("g")
+               .call(d3.axisLeft(y));
 
-        // Añade los puntos
-        svg.selectAll("circle")
-           .data(filteredData)
-           .enter()
-           .append("circle")
-           .attr("cx", d => x(+d.PC1))
-           .attr("cy", d => y(+d.PC2))
-           .attr("r", 5)
-           .style("fill", d => colorScale(+d.AQI));
+            // Define la escala de colores para el AQI
+            const colorScale = d3.scaleOrdinal()
+                                 .domain([1, 2, 3, 4, 5, 6])
+                                 .range([
+                                     "rgb(0, 128, 0)",   // Excelente
+                                     "rgb(238,176,9)",   // Bueno
+                                     "rgb(250,145,74)",  // Ligeramente
+                                     "rgb(255, 0, 0)",   // Moderadamente
+                                     "rgb(128, 0, 128)", // Fuerte
+                                     "rgb(165, 42, 42)"  // Severo
+                                 ]);
 
-        // Añade el tooltip
-        const tooltip = d3.select("body").append("div")
-                          .attr("class", "tooltip")
+            // Añade los puntos
+            svg.selectAll("circle")
+               .data(filteredData)
+               .enter()
+               .append("circle")
+               .attr("cx", d => x(+d.PC1))
+               .attr("cy", d => y(+d.PC2))
+               .attr("r", 5)
+               .style("fill", d => colorScale(+d.AQI))
+               .on("mouseover", function(event, d) {
+                   tooltip.transition()
+                          .duration(200)
+                          .style("opacity", .9);
+                   tooltip.html(`Fecha: ${d.date}<br>Hora: ${d.time}<br>Coordenadas: (${(+d.PC1).toFixed(2)}, ${(+d.PC2).toFixed(2)})`)
+                          .style("left", (event.pageX + 5) + "px")
+                          .style("top", (event.pageY - 28) + "px");
+               })
+               .on("mouseout", function() {
+                   tooltip.transition()
+                          .duration(500)
                           .style("opacity", 0);
-        // Añadir interactividad al pasar el mouse por los puntos
+               })
+               .on("click", function(event, d) {
+                   console.log("Fecha seleccionada: ", d.date || 'N/A', d.time || 'N/A');
+                   evolutionEspatialPCA_For_Day(stationId, d.date);
+               });
+        }
 
+        // Inicializa el gráfico
+        updateChart();
 
-        svg.selectAll("circle")
-           .on("click", (event, d) => {
-               console.log("Fecha seleccionada: ", d.date || 'N/A', d.time || 'N/A');
-               evolutionEspatialPCA_For_Day(stationId, selectedDate);
-           });
+        // Añade event listeners para los filtros
+        d3.select("#filter-type").on("change", function() {
+            const filterType = this.value;
+            d3.select("#day-filter").style("display", filterType === "day" ? "inline-block" : "none");
+            d3.select("#month-filter").style("display", filterType === "month" ? "inline-block" : "none");
+            updateChart();
+        });
+
+        d3.select("#day-filter").on("change", updateChart);
+        d3.select("#month-filter").on("change", updateChart);
+
+        // Configura el rango de fechas para el filtro de día
+        const dates = filteredData.map(d => d.date);
+        const minDate = d3.min(dates);
+        const maxDate = d3.max(dates);
+        d3.select("#day-filter")
+          .attr("min", minDate)
+          .attr("max", maxDate)
+          .attr("value", minDate);
     });
 }
+
 
 function evolutionEspatialPCA_For_Day(stationId, selectedDate) {
     console.log("Estacion seleccionada: ", stationId, "Fecha seleccionada: ", selectedDate, "PCA");

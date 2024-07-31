@@ -35,6 +35,7 @@
             margin-left: 0px;
         }
         
+        
         .chart-pollution {
             top: 500px;
             margin-bottom: -30px;
@@ -42,73 +43,80 @@
             margin-left: 0px;
         }
         #pollutants-container {
-            width: 920px;
-            height: 220px;
+            width: 1020px;
+            height: 195px;
             top: 10px;
-            left: 40px;
+            left: 843px;
+            overflow-x: hidden; /* Oculta el scroll horizontal */
         }
         #weather-container {
-            width: 920px;
-            top: 450px;
-            height: 220px;
-            left: -920px;
+            width: 1020px;
+            top: 235px;
+            height: 195px;
+            left: -220px;
+            overflow-x: hidden; /* Oculta el scroll horizontal */
+
         }
         #chart-hour-pollution{
-            width: 920px;
+            width: 834px;
             height: 155px;
-            top: 20px;
-            left: 40px;
+            top: 238px;
+            left: 1030px;
+            overflow-x: hidden; /* Oculta el scroll horizontal */
+
         }
         #chart-hour-meteorological{
-            width: 920px;
+            width: 834px;
             height: 160px;
-            top: 285px;
-            left: 40px;
+            top: 245px;
+            left: 1030px;
+            overflow-x: hidden; /* Oculta el scroll horizontal */
+
         }
         #chart-hour-correlation{
             overflow: hidden; /* Evita el scroll */
-            width: 220px;
-            height: 280px;
-            top: -587px;
-            left: 1000px;
+            width: 330px;
+            height: 370px;
+            top: -567px;
+            left: 670px;
         }
         #chart-pca{
             overflow: hidden; /* Evita el scroll */
             width: 380px;
             height: 420px;
-            top: -1339px;
-            left: 1000px;
+            top: -1404px;
+            left: 430px;
         }
         #chart-hour-compare{
             overflow: hidden; /* Evita el scroll */
             width: 622px;
             height: 100px;
-            top: -140px;
-            left: 1250px;
+            top: -120px;
+            left: 20px;
         }
         #chart-for-hour-compare{
             overflow: hidden; /* Evita el scroll */
             width: 622px;
             height: 140px;
-            top: -140px;
-            left: 1250px;
+            top: -120px;
+            left: 20px;
         }
         #chart-for-hour-compare2{
             overflow: hidden; /* Evita el scroll */
             width: 622px;
             height: 140px;
-            top: -140px;
-            left: 1250px;
+            top: -120px;
+            left: 20px;
         }
         #map-container {
             border: 1px solid #131313;
             padding: 10px;
             overflow: hidden; /* Evita el scroll */
             position: absolute;
-            width: 460px;
+            width: 375px;
             top: 10px;
             height: 420px;
-            left: 1410px;
+            left: 20px;
         }
         #date-selector {
             position: absolute;
@@ -118,6 +126,7 @@
             color: #ffffff;
             z-index: 1000; /* Asegura que esté encima del mapa */
         }
+        
         #datepicker {
             border: 1px solid #88a494;
             padding: 5px;
@@ -150,7 +159,8 @@
             <div class="title"> <img src="img/logo-cont.png" width="24px" height="15px" alt="Leyenda"  id="legend-container"> Gráficas de Contaminantes</div>
 
             <div class="content">
-                <div id="legend-container"></div>
+                <div id="legend-container2"></div>
+                <div id="legend-container3"></div>
                 <div id="chart-PM2_5" class="chart-pollution"></div>
                 <div id="chart-PM10" class="chart-pollution"></div>
                 <div id="chart-SO2" class="chart-pollution"></div>
@@ -293,6 +303,28 @@
             Análisis de la Evolución Espacial
         </div>
         <div class="content">
+            <div class="pca-filters">
+                <select id="filter-type">
+                  <option value="all">Todos los datos</option>
+                  <option value="day">Por día</option>
+                  <option value="month">Por mes</option>
+                </select>
+                <input type="date" id="day-filter" style="display:none;">
+                <select id="month-filter" style="display:none;">
+                  <option value="01">Enero</option>
+                  <option value="02">Febrero</option>
+                  <option value="03">Marzo</option>
+                  <option value="04">Abril</option>
+                  <option value="05">Mayo</option>
+                  <option value="06">Junio</option>
+                  <option value="07">Julio</option>
+                  <option value="08">Agosto</option>
+                  <option value="09">Septiembre</option>
+                  <option value="10">Octubre</option>
+                  <option value="11">Noviembre</option>
+                  <option value="12">Diciembre</option>
+                </select>
+              </div>
             <div id="chart-pca" class="chart-pca"></div>
         </div>
     </div>
