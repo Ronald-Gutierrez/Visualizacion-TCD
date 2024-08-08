@@ -2,7 +2,7 @@
 ---
 
 # Visualizacion de la Calidad del Aire con factores Meteorologicos
-
+Puedes visitar la pagina solo para computadora: https://ronald-gutierrez.github.io/Visualizacion-TCD/
 ## Descripción
 
 Este proyecto es una herramienta de visualización de datos desarrollada en Python, JavaScript, HTML y CSS. Su objetivo es facilitar el análisis y la interpretación de conjuntos de datos a través de gráficos interactivos y dinámicos.
